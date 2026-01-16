@@ -7,9 +7,9 @@ import 'core/theme/mkr_cupertino_theme.dart';
 import 'data/services/push_notification_service.dart';
 import 'data/services/security_checker.dart';
 import 'presentation/screens/auth_screen.dart';
-import 'presentation/screens/fake_calculator_screen.dart';
 import 'presentation/screens/main_tab_screen.dart';
 import 'presentation/screens/security_check_screen.dart';
+import 'presentation/screens/simple_calculator_screen.dart';
 import 'presentation/screens/simple_chat_screen.dart';
 import 'presentation/screens/simple_panic_screen.dart';
 
@@ -89,7 +89,7 @@ class _MKRAppState extends State<MKRApp> {
       ),
       GoRoute(
         path: '/stealth',
-        builder: (context, state) => FakeCalculatorScreen(
+        builder: (context, state) => SimpleCalculatorScreen(
           secretCode: '1337',
           onSecretCodeEntered: () {
             // Unlock from stealth mode
