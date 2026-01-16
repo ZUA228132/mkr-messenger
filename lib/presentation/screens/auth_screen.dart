@@ -7,7 +7,6 @@ import '../../data/services/biometric_service.dart';
 import '../../data/services/lockout_manager.dart';
 
 /// Authentication screen with callsign and PIN
-/// Requirements: 2.1, 2.2, 2.4, 2.5
 class AuthScreen extends StatefulWidget {
   final void Function(String callsign)? onAuthenticated;
 
@@ -36,9 +35,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _checkBiometric() async {
     final available = await _biometricService.isAvailable();
-    if (mounted) {
-      setState(() => _biometricAvailable = available);
-    }
+    if (mounted) setState(() => _biometricAvailable = available);
   }
 
   @override
@@ -51,9 +48,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _authenticate() async {
     if (_lockoutManager.isLockedOut) {
       final remaining = _lockoutManager.remainingLockoutDuration;
-      setState(() {
-        _errorMessage = 'Too many attempts. Try again in ${remaining.inSeconds}s';
-      });
+      setState(() => _errorMessage = 'Too many attempts. Try again in ${remaining.inSeconds}s');
       return;
     }
 
@@ -77,7 +72,6 @@ class _AuthScreenState extends State<AuthScreen> {
     });
 
     await Future.delayed(const Duration(milliseconds: 500));
-
     _lockoutManager.reset();
 
     if (mounted) {
@@ -89,11 +83,11 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _authenticateWithBiometric() async {
     if (!_biometricAvailable) return;
 
-    final success = await _biometricService.authenticate(
+    final result = await _biometricService.authenticate(
       reason: 'Authenticate to access MKR Messenger',
     );
 
-    if (success && mounted) {
+    if (result == BiometricResult.success && mounted) {
       widget.onAuthenticated?.call('user');
     }
   }
@@ -113,16 +107,10 @@ class _AuthScreenState extends State<AuthScreen> {
               _buildCallsignField(),
               const SizedBox(height: 16),
               _buildPinField(),
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 12),
-                _buildError(),
-              ],
+              if (_errorMessage != null) ...[const SizedBox(height: 12), _buildError()],
               const SizedBox(height: 24),
               _buildLoginButton(),
-              if (_biometricAvailable) ...[
-                const SizedBox(height: 16),
-                _buildBiometricButton(),
-              ],
+              if (_biometricAvailable) ...[const SizedBox(height: 16), _buildBiometricButton()],
             ],
           ),
         ),
@@ -140,22 +128,12 @@ class _AuthScreenState extends State<AuthScreen> {
             color: CupertinoColors.systemBlue.withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Icon(
-            CupertinoIcons.shield_lefthalf_fill,
-            size: 48,
-            color: CupertinoColors.systemBlue,
-          ),
+          child: const Icon(CupertinoIcons.shield_lefthalf_fill, size: 48, color: CupertinoColors.systemBlue),
         ),
         const SizedBox(height: 16),
-        const Text(
-          AppConstants.appName,
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-        ),
+        const Text(AppConstants.appName, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        const Text(
-          'Secure. Private. Protected.',
-          style: TextStyle(fontSize: 14, color: CupertinoColors.systemGrey),
-        ),
+        const Text('Secure. Private. Protected.', style: TextStyle(fontSize: 14, color: CupertinoColors.systemGrey)),
       ],
     );
   }
@@ -169,15 +147,9 @@ class _AuthScreenState extends State<AuthScreen> {
         CupertinoTextField(
           controller: _callsignController,
           placeholder: 'Enter your callsign',
-          prefix: const Padding(
-            padding: EdgeInsets.only(left: 12),
-            child: Text('@', style: TextStyle(color: CupertinoColors.systemGrey)),
-          ),
+          prefix: const Padding(padding: EdgeInsets.only(left: 12), child: Text('@', style: TextStyle(color: CupertinoColors.systemGrey))),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-          decoration: BoxDecoration(
-            color: CupertinoColors.systemGrey6,
-            borderRadius: BorderRadius.circular(10),
-          ),
+          decoration: BoxDecoration(color: CupertinoColors.systemGrey6, borderRadius: BorderRadius.circular(10)),
           autocorrect: false,
           textInputAction: TextInputAction.next,
         ),
@@ -196,23 +168,13 @@ class _AuthScreenState extends State<AuthScreen> {
           placeholder: 'Enter your PIN',
           obscureText: _obscurePin,
           keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(6),
-          ],
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-          decoration: BoxDecoration(
-            color: CupertinoColors.systemGrey6,
-            borderRadius: BorderRadius.circular(10),
-          ),
+          decoration: BoxDecoration(color: CupertinoColors.systemGrey6, borderRadius: BorderRadius.circular(10)),
           suffix: CupertinoButton(
             padding: const EdgeInsets.only(right: 8),
             onPressed: () => setState(() => _obscurePin = !_obscurePin),
-            child: Icon(
-              _obscurePin ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
-              color: CupertinoColors.systemGrey,
-              size: 20,
-            ),
+            child: Icon(_obscurePin ? CupertinoIcons.eye : CupertinoIcons.eye_slash, color: CupertinoColors.systemGrey, size: 20),
           ),
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _authenticate(),
@@ -224,17 +186,12 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget _buildError() {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: CupertinoColors.systemRed.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
+      decoration: BoxDecoration(color: CupertinoColors.systemRed.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
       child: Row(
         children: [
           const Icon(CupertinoIcons.exclamationmark_circle, color: CupertinoColors.systemRed, size: 18),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(_errorMessage!, style: const TextStyle(color: CupertinoColors.systemRed, fontSize: 13)),
-          ),
+          Expanded(child: Text(_errorMessage!, style: const TextStyle(color: CupertinoColors.systemRed, fontSize: 13))),
         ],
       ),
     );
@@ -243,9 +200,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget _buildLoginButton() {
     return CupertinoButton.filled(
       onPressed: _isLoading ? null : _authenticate,
-      child: _isLoading
-          ? const CupertinoActivityIndicator(color: CupertinoColors.white)
-          : const Text('Login'),
+      child: _isLoading ? const CupertinoActivityIndicator(color: CupertinoColors.white) : const Text('Login'),
     );
   }
 
@@ -254,11 +209,7 @@ class _AuthScreenState extends State<AuthScreen> {
       onPressed: _authenticateWithBiometric,
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(CupertinoIcons.person_crop_circle),
-          SizedBox(width: 8),
-          Text('Use Face ID / Touch ID'),
-        ],
+        children: [Icon(CupertinoIcons.person_crop_circle), SizedBox(width: 8), Text('Use Face ID / Touch ID')],
       ),
     );
   }
