@@ -10,7 +10,7 @@ class SecureStorageDatasource {
           iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
         );
 
-  static const String _accessTokenKey = 'access_token';
+  static const String _accessTokenKey = 'jwt_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _tokenExpiryKey = 'token_expiry';
 

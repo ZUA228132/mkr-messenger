@@ -79,6 +79,19 @@ class _MKRAppState extends State<MKRApp> {
     _apiClient.setOnUnauthorized(() {
       _handleLogout();
     });
+    
+    // Initialize token from storage on app start
+    _initializeAuthFromStorage();
+  }
+  
+  Future<void> _initializeAuthFromStorage() async {
+    final token = await _storage.getToken();
+    final userId = await _storage.getUserId();
+    if (token != null && token.isNotEmpty && userId != null) {
+      _apiClient.setAuthToken(token);
+      setState(() => _currentUserId = userId);
+      await _webSocketService.connect(userId);
+    }
   }
 
   Future<void> _handleAuthenticated(String userId) async {
