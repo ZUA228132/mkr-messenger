@@ -10,7 +10,8 @@ class MessageResponse {
   final String id;
   final String chatId;
   final String senderId;
-  final String content;
+  final String encryptedContent;
+  final String nonce;
   final String type;
   final int timestamp;
   final String status;
@@ -19,7 +20,8 @@ class MessageResponse {
     required this.id,
     required this.chatId,
     required this.senderId,
-    required this.content,
+    required this.encryptedContent,
+    required this.nonce,
     required this.type,
     required this.timestamp,
     required this.status,
@@ -30,7 +32,9 @@ class MessageResponse {
       id: json['id'] as String,
       chatId: json['chatId'] as String? ?? '',
       senderId: json['senderId'] as String,
-      content: json['content'] as String? ?? '',
+      // Support both 'encryptedContent' and 'content' for compatibility
+      encryptedContent: json['encryptedContent'] as String? ?? json['content'] as String? ?? '',
+      nonce: json['nonce'] as String? ?? '',
       type: json['type'] as String? ?? 'TEXT',
       timestamp: json['timestamp'] as int? ?? 0,
       status: json['status'] as String? ?? 'sent',
@@ -42,7 +46,8 @@ class MessageResponse {
       'id': id,
       'chatId': chatId,
       'senderId': senderId,
-      'content': content,
+      'encryptedContent': encryptedContent,
+      'nonce': nonce,
       'type': type,
       'timestamp': timestamp,
       'status': status,
@@ -50,12 +55,13 @@ class MessageResponse {
   }
 
   /// Convert to domain entity
+  /// For now, content is not encrypted, so we use encryptedContent directly
   Message toEntity() {
     return Message(
       id: id,
       chatId: chatId,
       senderId: senderId,
-      content: content,
+      content: encryptedContent, // In production, decrypt here
       type: _parseMessageType(type),
       timestamp: DateTime.fromMillisecondsSinceEpoch(timestamp),
       status: _parseMessageStatus(status),
@@ -113,19 +119,39 @@ class MessageResponse {
 /// Requirements: 5.3 - POST /api/messages
 class SendMessageRequest {
   final String chatId;
-  final String content;
+  final String encryptedContent;
+  final String nonce;
   final String type;
 
   const SendMessageRequest({
     required this.chatId,
-    required this.content,
+    required this.encryptedContent,
+    required this.nonce,
     this.type = 'TEXT',
   });
+
+  /// Create from plain content (generates nonce automatically)
+  factory SendMessageRequest.fromContent({
+    required String chatId,
+    required String content,
+    String type = 'TEXT',
+  }) {
+    // For now, send content as-is (no encryption)
+    // In production, this should encrypt the content
+    final nonce = DateTime.now().millisecondsSinceEpoch.toString();
+    return SendMessageRequest(
+      chatId: chatId,
+      encryptedContent: content,
+      nonce: nonce,
+      type: type,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
       'chatId': chatId,
-      'content': content,
+      'encryptedContent': encryptedContent,
+      'nonce': nonce,
       'type': type,
     };
   }

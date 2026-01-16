@@ -69,6 +69,7 @@ class ChatResponse {
       id: id,
       type: _parseType(type),
       participantIds: participants,
+      participantNames: participantNames,
       lastMessage: lastMessage?.toEntity(),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(createdAt),
       name: name.isNotEmpty ? name : null,

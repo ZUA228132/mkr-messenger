@@ -8,6 +8,7 @@ class Chat {
   final String id;
   final ChatType type;
   final List<String> participantIds;
+  final Map<String, String> participantNames;
   final Message? lastMessage;
   final DateTime updatedAt;
   final String? name;
@@ -18,6 +19,7 @@ class Chat {
     required this.id,
     required this.type,
     required this.participantIds,
+    this.participantNames = const {},
     this.lastMessage,
     required this.updatedAt,
     this.name,
@@ -25,10 +27,16 @@ class Chat {
     this.unreadCount = 0,
   });
 
+  /// Get display name for a participant
+  String? getParticipantName(String participantId) {
+    return participantNames[participantId];
+  }
+
   Chat copyWith({
     String? id,
     ChatType? type,
     List<String>? participantIds,
+    Map<String, String>? participantNames,
     Message? lastMessage,
     DateTime? updatedAt,
     String? name,
@@ -39,6 +47,7 @@ class Chat {
       id: id ?? this.id,
       type: type ?? this.type,
       participantIds: participantIds ?? this.participantIds,
+      participantNames: participantNames ?? this.participantNames,
       lastMessage: lastMessage ?? this.lastMessage,
       updatedAt: updatedAt ?? this.updatedAt,
       name: name ?? this.name,

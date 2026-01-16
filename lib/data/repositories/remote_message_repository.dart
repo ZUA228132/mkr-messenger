@@ -120,7 +120,7 @@ class RemoteMessageRepository {
     required String content,
     String type = 'TEXT',
   }) async {
-    final request = SendMessageRequest(
+    final request = SendMessageRequest.fromContent(
       chatId: chatId,
       content: content,
       type: type,

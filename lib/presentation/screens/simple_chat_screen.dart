@@ -107,7 +107,14 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         );
         if (recipientId.isNotEmpty) {
           setState(() => _recipientUserId = recipientId);
-          _loadRecipientUser(recipientId);
+          // Try to get name from participantNames first
+          final nameFromChat = chat.getParticipantName(recipientId);
+          if (nameFromChat != null && nameFromChat.isNotEmpty) {
+            // We have the name from chat, but still load user for online status
+            _loadRecipientUser(recipientId);
+          } else {
+            _loadRecipientUser(recipientId);
+          }
         }
       },
       onFailure: (_) {
@@ -500,11 +507,26 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Use recipient user info, or chat name, or loading placeholder
-    final displayName = _recipientUser?.displayName ?? 
-                        _recipientUser?.callsign ?? 
-                        _chat?.name ?? 
-                        (_isLoading ? 'Загрузка...' : 'Чат');
+    // Get recipient name from multiple sources with priority:
+    // 1. User displayName (most accurate, from user profile)
+    // 2. User callsign
+    // 3. Chat participantNames (from chat API)
+    // 4. Chat name
+    // 5. Loading placeholder
+    String displayName;
+    if (_recipientUser?.displayName != null && _recipientUser!.displayName!.isNotEmpty) {
+      displayName = _recipientUser!.displayName!;
+    } else if (_recipientUser?.callsign != null && _recipientUser!.callsign!.isNotEmpty) {
+      displayName = _recipientUser!.callsign!;
+    } else if (_recipientUserId != null && _chat?.getParticipantName(_recipientUserId!) != null) {
+      displayName = _chat!.getParticipantName(_recipientUserId!)!;
+    } else if (_chat?.name != null && _chat!.name!.isNotEmpty) {
+      displayName = _chat!.name!;
+    } else if (_isLoading) {
+      displayName = 'Загрузка...';
+    } else {
+      displayName = 'Чат';
+    }
     final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
     
     return CupertinoPageScaffold(

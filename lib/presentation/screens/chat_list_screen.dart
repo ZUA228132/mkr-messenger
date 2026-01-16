@@ -125,12 +125,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ),
             border: null,
           ),
-          // Красивый блок под монобровь - статус безопасности
+          // Pull to refresh
+          CupertinoSliverRefreshControl(onRefresh: widget.onRefresh),
+          // Красивый блок - статус безопасности (после pull to refresh)
           SliverToBoxAdapter(
             child: _buildSecurityBanner(context),
           ),
-          // Pull to refresh
-          CupertinoSliverRefreshControl(onRefresh: widget.onRefresh),
           // Контент
           _buildSliverContent(),
         ],
