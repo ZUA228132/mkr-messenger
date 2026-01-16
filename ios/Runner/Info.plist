@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Bundle Configuration -->
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>MKR Messenger</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>MKR</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	
+	<!-- iOS Requirements -->
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>MinimumOSVersion</key>
+	<string>14.0</string>
+	
+	<!-- Storyboards -->
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	
+	<!-- Supported Orientations -->
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	
+	<!-- Performance -->
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	
+	<!-- Face ID / Biometric Authentication Permission -->
+	<!-- Requirements: 8.2 - Integrate with iOS biometric APIs -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>MKR Messenger использует Face ID для безопасной аутентификации и защиты ваших данных.</string>
+	
+	<!-- Camera Permission (for media messages) -->
+	<key>NSCameraUsageDescription</key>
+	<string>MKR Messenger использует камеру для отправки фото и видео сообщений.</string>
+	
+	<!-- Photo Library Permission -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>MKR Messenger использует доступ к фото для отправки изображений в чатах.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>MKR Messenger сохраняет полученные медиафайлы в вашу фотогалерею.</string>
+	
+	<!-- Microphone Permission (for voice messages) -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>MKR Messenger использует микрофон для записи голосовых сообщений.</string>
+	
+	<!-- Location Permission (optional, for location sharing) -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>MKR Messenger использует геолокацию для отправки вашего местоположения в чатах.</string>
+	
+	<!-- Contacts Permission (optional, for finding contacts) -->
+	<key>NSContactsUsageDescription</key>
+	<string>MKR Messenger использует контакты для поиска друзей, использующих приложение.</string>
+	
+	<!-- Background Modes -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	
+	<!-- App Transport Security -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+	
+	<!-- Encryption Export Compliance -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<true/>
+	<key>ITSEncryptionExportComplianceCode</key>
+	<string></string>
+	
+	<!-- Status Bar -->
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleLightContent</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+	
+	<!-- Alternate App Icons (for Stealth Mode) -->
+	<!-- Requirements: 5.1 - Change app icon to selected disguise -->
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcon</string>
+			</array>
+			<key>UIPrerenderedIcon</key>
+			<false/>
+		</dict>
+		<key>CFBundleAlternateIcons</key>
+		<dict>
+			<key>Calculator</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>CalculatorIcon</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>Notes</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>NotesIcon</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>Weather</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>WeatherIcon</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+		</dict>
+	</dict>
+	<key>CFBundleIcons~ipad</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcon</string>
+			</array>
+			<key>UIPrerenderedIcon</key>
+			<false/>
+		</dict>
+		<key>CFBundleAlternateIcons</key>
+		<dict>
+			<key>Calculator</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>CalculatorIcon</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>Notes</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>NotesIcon</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>Weather</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>WeatherIcon</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+		</dict>
+	</dict>
+</dict>
+</plist>

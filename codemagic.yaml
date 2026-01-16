@@ -1,0 +1,231 @@
+# Codemagic CI/CD Configuration for MKR Flutter iOS Builds
+# Requirements: 10.1, 10.2 - Build workflow for iOS, code signing setup
+# 
+# This configuration enables building iOS apps without a Mac using Codemagic cloud service.
+# Free tier: 500 build minutes/month
+
+workflows:
+  # iOS Release Build Workflow
+  ios-release:
+    name: iOS Release Build
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.mkr.messenger
+      vars:
+        # App configuration
+        BUNDLE_ID: "com.mkr.messenger"
+        APP_NAME: "MKR Messenger"
+        # Flutter version
+        FLUTTER_VERSION: "3.24.0"
+      flutter: ${FLUTTER_VERSION}
+      xcode: latest
+      cocoapods: default
+    
+    # Trigger on push to main branch
+    # Requirements: 10.1 - WHEN code is pushed to main branch THEN trigger build pipeline
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+        - pattern: release/*
+          include: true
+          source: true
+    
+    scripts:
+      # Set up Flutter
+      - name: Set up Flutter
+        script: |
+          echo "Flutter version: $FLUTTER_VERSION"
+          flutter --version
+      
+      # Get dependencies
+      - name: Get Flutter packages
+        script: |
+          cd mkr_flutter
+          flutter pub get
+      
+      # Run code generation (Riverpod)
+      - name: Run build_runner
+        script: |
+          cd mkr_flutter
+          flutter pub run build_runner build --delete-conflicting-outputs || true
+      
+      # Run tests
+      - name: Run Flutter tests
+        script: |
+          cd mkr_flutter
+          flutter test
+        ignore_failure: true
+      
+      # Set up iOS code signing
+      # Requirements: 10.2 - WHEN building iOS THEN sign the app with provided certificates
+      - name: Set up code signing settings on Xcode project
+        script: |
+          cd mkr_flutter/ios
+          xcode-project use-profiles
+      
+      # Build iOS app
+      - name: Build iOS IPA
+        script: |
+          cd mkr_flutter
+          flutter build ipa --release \
+            --build-name=1.0.0 \
+            --build-number=$PROJECT_BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist
+    
+    # Artifacts to collect
+    # Requirements: 10.3 - WHEN build succeeds THEN generate IPA file for distribution
+    artifacts:
+      - mkr_flutter/build/ios/ipa/*.ipa
+      - mkr_flutter/build/ios/archive/*.xcarchive
+      - /tmp/xcodebuild_logs/*.log
+    
+    # Publishing configuration
+    # Requirements: 10.4 - WHEN IPA is ready THEN upload to TestFlight
+    publishing:
+      app_store_connect:
+        # API key from App Store Connect
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
+        # Automatically submit for beta review
+        beta_groups:
+          - Internal Testers
+      
+      email:
+        recipients:
+          - dev@mkr-messenger.com
+        notify:
+          success: true
+          failure: true
+
+  # iOS Ad Hoc Build (for direct distribution)
+  ios-adhoc:
+    name: iOS Ad Hoc Build
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    
+    environment:
+      ios_signing:
+        distribution_type: ad_hoc
+        bundle_identifier: com.mkr.messenger
+      vars:
+        BUNDLE_ID: "com.mkr.messenger"
+        APP_NAME: "MKR Messenger"
+        FLUTTER_VERSION: "3.24.0"
+      flutter: ${FLUTTER_VERSION}
+      xcode: latest
+      cocoapods: default
+    
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: develop
+          include: true
+          source: true
+        - pattern: feature/*
+          include: true
+          source: true
+    
+    scripts:
+      - name: Set up Flutter
+        script: |
+          echo "Flutter version: $FLUTTER_VERSION"
+          flutter --version
+      
+      - name: Get Flutter packages
+        script: |
+          cd mkr_flutter
+          flutter pub get
+      
+      - name: Run build_runner
+        script: |
+          cd mkr_flutter
+          flutter pub run build_runner build --delete-conflicting-outputs || true
+      
+      - name: Set up code signing settings on Xcode project
+        script: |
+          cd mkr_flutter/ios
+          xcode-project use-profiles
+      
+      - name: Build iOS IPA (Ad Hoc)
+        script: |
+          cd mkr_flutter
+          flutter build ipa --release \
+            --build-name=1.0.0 \
+            --build-number=$PROJECT_BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist
+    
+    artifacts:
+      - mkr_flutter/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    
+    publishing:
+      email:
+        recipients:
+          - dev@mkr-messenger.com
+        notify:
+          success: true
+          failure: true
+
+  # Development build for testing
+  ios-debug:
+    name: iOS Debug Build
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    
+    environment:
+      ios_signing:
+        distribution_type: development
+        bundle_identifier: com.mkr.messenger
+      vars:
+        FLUTTER_VERSION: "3.24.0"
+      flutter: ${FLUTTER_VERSION}
+      xcode: latest
+      cocoapods: default
+    
+    triggering:
+      events:
+        - pull_request
+      branch_patterns:
+        - pattern: '*'
+          include: true
+          source: true
+    
+    scripts:
+      - name: Set up Flutter
+        script: |
+          flutter --version
+      
+      - name: Get Flutter packages
+        script: |
+          cd mkr_flutter
+          flutter pub get
+      
+      - name: Analyze code
+        script: |
+          cd mkr_flutter
+          flutter analyze
+        ignore_failure: true
+      
+      - name: Run tests
+        script: |
+          cd mkr_flutter
+          flutter test
+      
+      - name: Build iOS (Debug)
+        script: |
+          cd mkr_flutter
+          flutter build ios --debug --no-codesign
+    
+    artifacts:
+      - mkr_flutter/build/ios/Debug-iphoneos/*.app

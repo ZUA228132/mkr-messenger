@@ -1,0 +1,62 @@
+name: mkr_flutter
+description: "MKR Messenger - Secure cross-platform messenger for iOS and Android"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI
+  cupertino_icons: ^1.0.8
+
+  # Networking
+  dio: ^5.4.0
+  web_socket_channel: ^2.4.0
+
+  # Secure Storage
+  flutter_secure_storage: ^9.0.0
+
+  # Biometric Authentication
+  local_auth: ^2.2.0
+
+  # Local Database
+  sqflite: ^2.3.2
+  path: ^1.9.0
+
+  # Cryptography
+  pointycastle: ^3.7.4
+  cryptography: ^2.7.0
+
+  # Push Notifications (APNs for iOS)
+  # Requirements: 8.4 - Use APNs for push notifications
+  # TODO: Re-enable after fixing iOS modular headers issue
+  # firebase_core: ^3.3.0
+  # firebase_messaging: ^15.0.4
+
+  # State Management
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # Navigation
+  go_router: ^14.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+  
+  # Property-based testing
+  glados: ^1.1.7
+  
+  # Code generation for Riverpod
+  riverpod_generator: ^2.4.0
+  build_runner: ^2.4.8
+
+flutter:
+  uses-material-design: true
