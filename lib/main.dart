@@ -9,9 +9,11 @@ import 'data/datasources/api_client.dart';
 import 'data/datasources/secure_local_storage.dart';
 import 'data/datasources/websocket_service.dart';
 import 'data/repositories/remote_auth_repository.dart';
+import 'data/repositories/remote_call_repository.dart';
 import 'data/repositories/remote_chat_repository.dart';
 import 'data/repositories/remote_message_repository.dart';
 import 'data/repositories/remote_user_repository.dart';
+import 'data/services/livekit_service.dart';
 import 'data/services/push_notification_service.dart';
 import 'data/services/security_checker.dart';
 import 'presentation/screens/auth_screen.dart';
@@ -50,6 +52,8 @@ class _MKRAppState extends State<MKRApp> {
   late final RemoteChatRepository _chatRepository;
   late final RemoteMessageRepository _messageRepository;
   late final RemoteUserRepository _userRepository;
+  late final RemoteCallRepository _callRepository;
+  late final LiveKitService _liveKitService;
 
   @override
   void initState() {
@@ -73,6 +77,8 @@ class _MKRAppState extends State<MKRApp> {
       webSocketService: _webSocketService,
     );
     _userRepository = RemoteUserRepository(apiClient: _apiClient);
+    _callRepository = RemoteCallRepository(apiClient: _apiClient);
+    _liveKitService = LiveKitService();
     
     // Set up unauthorized callback for token expiration
     // Requirements: 3.3 - Redirect to login when token expires
@@ -117,6 +123,7 @@ class _MKRAppState extends State<MKRApp> {
   void dispose() {
     _webSocketService.dispose();
     _messageRepository.dispose();
+    _liveKitService.dispose();
     super.dispose();
   }
 
@@ -163,6 +170,8 @@ class _MKRAppState extends State<MKRApp> {
             messageRepository: _messageRepository,
             userRepository: _userRepository,
             chatRepository: _chatRepository,
+            callRepository: _callRepository,
+            liveKitService: _liveKitService,
             webSocketService: _webSocketService,
             onBack: () => context.pop(),
           );

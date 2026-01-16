@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 
 import '../../data/datasources/websocket_service.dart';
+import '../../data/repositories/remote_call_repository.dart';
 import '../../data/repositories/remote_chat_repository.dart';
 import '../../data/repositories/remote_message_repository.dart';
 import '../../data/repositories/remote_user_repository.dart';
+import '../../data/services/livekit_service.dart';
 import '../../domain/entities/chat.dart';
 import '../../domain/entities/message.dart';
 import '../../domain/entities/user.dart';
+import 'call_screen.dart';
 
 /// Simple chat screen for direct messaging with backend integration
 /// Requirements: 5.1-5.4 - Message retrieval, display, sending, real-time updates
@@ -19,6 +22,8 @@ class SimpleChatScreen extends StatefulWidget {
   final RemoteMessageRepository? messageRepository;
   final RemoteUserRepository? userRepository;
   final RemoteChatRepository? chatRepository;
+  final RemoteCallRepository? callRepository;
+  final LiveKitService? liveKitService;
   final WebSocketService? webSocketService;
   final VoidCallback? onBack;
 
@@ -29,6 +34,8 @@ class SimpleChatScreen extends StatefulWidget {
     this.messageRepository,
     this.userRepository,
     this.chatRepository,
+    this.callRepository,
+    this.liveKitService,
     this.webSocketService,
     this.onBack,
   });
@@ -626,9 +633,15 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     );
   }
 
-  void _initiateCall(BuildContext context, String displayName) {
-    // TODO: Get call token from backend and start call
-    // For now show that call is being initiated
+  void _initiateCall(BuildContext context, String displayName) async {
+    if (widget.callRepository == null || widget.liveKitService == null) {
+      _showError('Звонки недоступны');
+      return;
+    }
+    
+    final recipientId = _recipientUserId ?? widget.chatId;
+    
+    // Show loading dialog
     showCupertinoDialog(
       context: context,
       barrierDismissible: false,
@@ -639,26 +652,63 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           children: [
             const CupertinoActivityIndicator(),
             const SizedBox(width: 12),
-            Text('Вызов $displayName...'),
+            Flexible(child: Text('Вызов $displayName...')),
           ],
         ),
         actions: [
           CupertinoDialogAction(
             isDestructiveAction: true,
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () {
+              Navigator.pop(ctx);
+              widget.liveKitService?.endCall();
+            },
             child: const Text('Отмена'),
           ),
         ],
       ),
     );
     
-    // Simulate call connection (replace with real API call)
-    Future.delayed(const Duration(seconds: 2), () {
-      if (context.mounted) {
-        Navigator.pop(context); // Close loading dialog
-        _showError('Не удалось подключиться к серверу звонков');
-      }
-    });
+    // Get call token from backend
+    final result = await widget.callRepository!.getCallToken(
+      calleeId: recipientId,
+      isVideo: false,
+    );
+    
+    if (!context.mounted) return;
+    Navigator.pop(context); // Close loading dialog
+    
+    result.fold(
+      onSuccess: (callResponse) {
+        // Open call screen
+        Navigator.of(context).push(
+          CupertinoPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => CallScreen(
+              recipientId: recipientId,
+              recipientName: displayName,
+              isVideo: false,
+              isIncoming: false,
+              token: callResponse.token,
+              liveKitService: widget.liveKitService!,
+              onCallEnded: () {
+                // Optionally report call end to backend
+              },
+            ),
+          ),
+        );
+      },
+      onFailure: (error) {
+        String errorMsg = 'Не удалось начать звонок';
+        if (error.statusCode == 401) {
+          errorMsg = 'Сессия истекла. Войдите заново';
+        } else if (error.statusCode == 404) {
+          errorMsg = 'Пользователь не найден';
+        } else if (error.message.contains('network') || error.message.contains('connection')) {
+          errorMsg = 'Нет подключения к интернету';
+        }
+        _showError(errorMsg);
+      },
+    );
   }
 
   String _getStatusText() {
