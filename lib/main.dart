@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'core/constants/app_constants.dart';
 import 'core/theme/mkr_cupertino_theme.dart';
 import 'data/services/push_notification_service.dart';
+import 'data/services/security_checker.dart';
 import 'presentation/screens/auth_screen.dart';
 import 'presentation/screens/fake_calculator_screen.dart';
 import 'presentation/screens/main_tab_screen.dart';
@@ -72,7 +73,9 @@ class _MKRAppState extends State<MKRApp> {
       ),
       GoRoute(
         path: '/security-check',
-        builder: (context, state) => const SecurityCheckScreen(),
+        builder: (context, state) => SecurityCheckScreen(
+          securityChecker: SecurityChecker(),
+        ),
       ),
       GoRoute(
         path: '/panic',
