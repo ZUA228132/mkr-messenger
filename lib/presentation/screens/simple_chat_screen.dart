@@ -562,13 +562,8 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           children: [
             CupertinoButton(
               padding: EdgeInsets.zero,
-              onPressed: () => _showComingSoon(context, 'Звонки'),
-              child: const Icon(CupertinoIcons.phone),
-            ),
-            CupertinoButton(
-              padding: EdgeInsets.zero,
-              onPressed: () => _showComingSoon(context, 'Видеозвонки'),
-              child: const Icon(CupertinoIcons.video_camera),
+              onPressed: () => _startVoiceCall(context),
+              child: const Icon(CupertinoIcons.phone_fill),
             ),
           ],
         ),
@@ -598,6 +593,72 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         ],
       ),
     );
+  }
+
+  /// Start a voice call
+  void _startVoiceCall(BuildContext context) {
+    final displayName = _recipientUser?.displayName ?? 
+                        _recipientUser?.callsign ?? 
+                        _chat?.name ?? 
+                        'Пользователь';
+    
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Голосовой звонок'),
+        content: Text('Позвонить $displayName?'),
+        actions: [
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () {
+              Navigator.pop(ctx);
+              _initiateCall(context, displayName);
+            },
+            child: const Text('Позвонить'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _initiateCall(BuildContext context, String displayName) {
+    // TODO: Get call token from backend and start call
+    // For now show that call is being initiated
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CupertinoActivityIndicator(),
+            const SizedBox(width: 12),
+            Text('Вызов $displayName...'),
+          ],
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Отмена'),
+          ),
+        ],
+      ),
+    );
+    
+    // Simulate call connection (replace with real API call)
+    Future.delayed(const Duration(seconds: 2), () {
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+        _showError('Не удалось подключиться к серверу звонков');
+      }
+    });
   }
 
   String _getStatusText() {
@@ -871,9 +932,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
       return Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: _isRecordingVideo 
-              ? CupertinoColors.systemPurple.withAlpha(25)
-              : CupertinoColors.systemRed.withAlpha(25),
+          color: CupertinoColors.systemBlue.withAlpha(25),
           border: const Border(
             top: BorderSide(color: CupertinoColors.separator, width: 0.5),
           ),
@@ -895,28 +954,24 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
                   Container(
                     width: 12,
                     height: 12,
-                    decoration: BoxDecoration(
-                      color: _isRecordingVideo 
-                          ? CupertinoColors.systemPurple 
-                          : CupertinoColors.systemRed,
+                    decoration: const BoxDecoration(
+                      color: CupertinoColors.systemRed,
                       shape: BoxShape.circle,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     _formatDuration(_recordingDuration),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: _isRecordingVideo 
-                          ? CupertinoColors.systemPurple 
-                          : CupertinoColors.systemRed,
+                      color: CupertinoColors.systemBlue,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    _isRecordingVideo ? 'Кружок' : 'Голосовое',
-                    style: const TextStyle(
+                  const Text(
+                    'Голосовое',
+                    style: TextStyle(
                       fontSize: 14,
                       color: CupertinoColors.systemGrey,
                     ),
@@ -928,12 +983,10 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
             CupertinoButton(
               padding: const EdgeInsets.all(8),
               onPressed: _stopRecording,
-              child: Icon(
+              child: const Icon(
                 CupertinoIcons.arrow_up_circle_fill,
                 size: 32,
-                color: _isRecordingVideo 
-                    ? CupertinoColors.systemPurple 
-                    : CupertinoColors.systemRed,
+                color: CupertinoColors.systemBlue,
               ),
             ),
           ],
@@ -994,28 +1047,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
                     ),
             ),
           ] else ...[
-            // Video note button (кружок)
-            CupertinoButton(
-              padding: const EdgeInsets.all(6),
-              onPressed: _startVideoRecording,
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: CupertinoColors.systemPurple,
-                    width: 2,
-                  ),
-                ),
-                child: const Icon(
-                  CupertinoIcons.videocam_fill,
-                  size: 14,
-                  color: CupertinoColors.systemPurple,
-                ),
-              ),
-            ),
-            // Voice note button
+            // Voice note button only (removed video circles)
             GestureDetector(
               onLongPressStart: (_) => _startVoiceRecording(),
               onLongPressEnd: (_) => _stopRecording(),
@@ -1040,7 +1072,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
                 child: const Icon(
                   CupertinoIcons.mic_fill,
                   size: 24,
-                  color: CupertinoColors.systemRed,
+                  color: CupertinoColors.systemBlue,
                 ),
               ),
             ),

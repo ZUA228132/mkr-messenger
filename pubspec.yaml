@@ -37,6 +37,15 @@ dependencies:
   camera: ^0.11.0+2
   path_provider: ^2.1.2
   
+  # Audio playback
+  audioplayers: ^6.0.0
+  
+  # LiveKit for voice/video calls
+  livekit_client: ^2.2.0
+  
+  # Permissions
+  permission_handler: ^11.3.1
+  
   # Image/File Picker
   image_picker: ^1.0.7
   file_picker: ^8.0.0+1
