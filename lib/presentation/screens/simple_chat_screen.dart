@@ -1,15 +1,27 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 
-/// Simple chat screen for direct messaging
+import '../../data/datasources/websocket_service.dart';
+import '../../data/repositories/remote_message_repository.dart';
+import '../../domain/entities/message.dart';
+
+/// Simple chat screen for direct messaging with backend integration
+/// Requirements: 5.1-5.4 - Message retrieval, display, sending, real-time updates
+/// Requirements: 6.3 - Send typing indicators
 class SimpleChatScreen extends StatefulWidget {
   final String recipientId;
   final String currentUserId;
+  final RemoteMessageRepository? messageRepository;
+  final WebSocketService? webSocketService;
   final VoidCallback? onBack;
 
   const SimpleChatScreen({
     super.key,
     required this.recipientId,
     required this.currentUserId,
+    this.messageRepository,
+    this.webSocketService,
     this.onBack,
   });
 
@@ -19,26 +31,153 @@ class SimpleChatScreen extends StatefulWidget {
 
 class _SimpleChatScreenState extends State<SimpleChatScreen> {
   final _messageController = TextEditingController();
-  final _messages = <_ChatMessage>[];
+  final _scrollController = ScrollController();
+  List<Message> _messages = [];
+  bool _isLoading = false;
+  bool _isSending = false;
+  String? _errorMessage;
+  StreamSubscription<Message>? _messageSubscription;
+  StreamSubscription<WsConnectionState>? _connectionSubscription;
+  WsConnectionState _connectionState = WsConnectionState.disconnected;
+  Timer? _typingTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMessages();
+    _subscribeToMessages();
+    _subscribeToConnectionState();
+  }
 
   @override
   void dispose() {
     _messageController.dispose();
+    _scrollController.dispose();
+    _messageSubscription?.cancel();
+    _connectionSubscription?.cancel();
+    _typingTimer?.cancel();
     super.dispose();
   }
 
-  void _sendMessage() {
+  /// Requirements: 5.4 - Handle new messages via WebSocket
+  void _subscribeToMessages() {
+    _messageSubscription = widget.messageRepository?.newMessages.listen((message) {
+      if (message.chatId == widget.recipientId && mounted) {
+        setState(() {
+          _messages.insert(0, message);
+        });
+      }
+    });
+  }
+
+  void _subscribeToConnectionState() {
+    _connectionSubscription = widget.webSocketService?.connectionState.listen((state) {
+      if (mounted) {
+        setState(() => _connectionState = state);
+      }
+    });
+    // Get initial state
+    _connectionState = widget.webSocketService?.currentState ?? WsConnectionState.disconnected;
+  }
+
+  /// Requirements: 5.1 - GET /api/messages/{chatId}
+  Future<void> _loadMessages() async {
+    if (widget.messageRepository == null) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final result = await widget.messageRepository!.getMessages(widget.recipientId);
+
+    if (!mounted) return;
+
+    result.fold(
+      onSuccess: (messages) {
+        setState(() {
+          _messages = messages;
+          _isLoading = false;
+        });
+      },
+      onFailure: (error) {
+        setState(() {
+          _errorMessage = error.message;
+          _isLoading = false;
+        });
+      },
+    );
+  }
+
+  /// Requirements: 5.3 - POST /api/messages
+  Future<void> _sendMessage() async {
     final content = _messageController.text.trim();
     if (content.isEmpty) return;
 
-    setState(() {
-      _messages.insert(0, _ChatMessage(
-        content: content,
-        isMe: true,
-        timestamp: DateTime.now(),
-      ));
-    });
-    _messageController.clear();
+    if (widget.messageRepository == null) {
+      // Fallback to local-only mode
+      setState(() {
+        _messages.insert(0, Message(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          chatId: widget.recipientId,
+          senderId: widget.currentUserId,
+          content: content,
+          type: MessageType.text,
+          timestamp: DateTime.now(),
+          status: MessageStatus.sent,
+        ));
+      });
+      _messageController.clear();
+      return;
+    }
+
+    setState(() => _isSending = true);
+
+    final result = await widget.messageRepository!.sendMessage(
+      chatId: widget.recipientId,
+      content: content,
+    );
+
+    if (!mounted) return;
+
+    result.fold(
+      onSuccess: (message) {
+        setState(() {
+          _messages.insert(0, message);
+          _isSending = false;
+        });
+        _messageController.clear();
+      },
+      onFailure: (error) {
+        setState(() => _isSending = false);
+        _showError(error.message);
+      },
+    );
+  }
+
+  /// Requirements: 6.3 - Send typing events via WebSocket
+  void _onTyping() {
+    _typingTimer?.cancel();
+    widget.messageRepository?.sendTypingIndicator(widget.recipientId);
+    
+    // Debounce typing events
+    _typingTimer = Timer(const Duration(seconds: 3), () {});
+  }
+
+  void _showError(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -54,11 +193,13 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('@${widget.recipientId}'),
-            const Text(
-              'End-to-end encrypted',
+            Text(
+              _getConnectionStatus(),
               style: TextStyle(
                 fontSize: 11,
-                color: CupertinoColors.systemGrey,
+                color: _connectionState == WsConnectionState.connected
+                    ? CupertinoColors.systemGreen
+                    : CupertinoColors.systemGrey,
               ),
             ),
           ],
@@ -80,7 +221,51 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     );
   }
 
+  String _getConnectionStatus() {
+    switch (_connectionState) {
+      case WsConnectionState.connected:
+        return 'End-to-end encrypted';
+      case WsConnectionState.connecting:
+        return 'Connecting...';
+      case WsConnectionState.reconnecting:
+        return 'Reconnecting...';
+      case WsConnectionState.disconnected:
+        return 'Offline';
+    }
+  }
+
+
   Widget _buildMessageList() {
+    if (_isLoading) {
+      return const Center(child: CupertinoActivityIndicator());
+    }
+
+    if (_errorMessage != null && _messages.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              CupertinoIcons.exclamationmark_triangle,
+              size: 48,
+              color: CupertinoColors.systemRed,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              style: const TextStyle(color: CupertinoColors.systemGrey),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            CupertinoButton(
+              onPressed: _loadMessages,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (_messages.isEmpty) {
       return Center(
         child: Column(
@@ -134,12 +319,14 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     }
 
     return ListView.builder(
+      controller: _scrollController,
       reverse: true,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: _messages.length,
       itemBuilder: (context, index) {
         final message = _messages[index];
-        return _MessageBubble(message: message);
+        final isMe = message.senderId == widget.currentUserId;
+        return _MessageBubble(message: message, isMe: isMe);
       },
     );
   }
@@ -174,17 +361,20 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
               maxLines: 4,
               minLines: 1,
               textInputAction: TextInputAction.send,
+              onChanged: (_) => _onTyping(),
               onSubmitted: (_) => _sendMessage(),
             ),
           ),
           CupertinoButton(
             padding: const EdgeInsets.all(8),
-            onPressed: _sendMessage,
-            child: const Icon(
-              CupertinoIcons.arrow_up_circle_fill,
-              size: 32,
-              color: CupertinoColors.systemBlue,
-            ),
+            onPressed: _isSending ? null : _sendMessage,
+            child: _isSending
+                ? const CupertinoActivityIndicator()
+                : const Icon(
+                    CupertinoIcons.arrow_up_circle_fill,
+                    size: 32,
+                    color: CupertinoColors.systemBlue,
+                  ),
           ),
         ],
       ),
@@ -192,59 +382,39 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
   }
 }
 
-class _ChatMessage {
-  final String content;
-  final bool isMe;
-  final DateTime timestamp;
-
-  _ChatMessage({
-    required this.content,
-    required this.isMe,
-    required this.timestamp,
-  });
-}
-
 class _MessageBubble extends StatelessWidget {
-  final _ChatMessage message;
+  final Message message;
+  final bool isMe;
 
-  const _MessageBubble({required this.message});
+  const _MessageBubble({required this.message, required this.isMe});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment:
-            message.isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
-          if (message.isMe) const Spacer(flex: 1),
+          if (isMe) const Spacer(flex: 1),
           Flexible(
             flex: 3,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: message.isMe
+                color: isMe
                     ? CupertinoColors.systemBlue
                     : CupertinoColors.systemGrey5,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(18),
                   topRight: const Radius.circular(18),
-                  bottomLeft: Radius.circular(message.isMe ? 18 : 4),
-                  bottomRight: Radius.circular(message.isMe ? 4 : 18),
+                  bottomLeft: Radius.circular(isMe ? 18 : 4),
+                  bottomRight: Radius.circular(isMe ? 4 : 18),
                 ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    message.content,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: message.isMe 
-                          ? CupertinoColors.white 
-                          : CupertinoColors.black,
-                    ),
-                  ),
+                  _buildContent(),
                   const SizedBox(height: 4),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -253,18 +423,14 @@ class _MessageBubble extends StatelessWidget {
                         _formatTime(message.timestamp),
                         style: TextStyle(
                           fontSize: 11,
-                          color: message.isMe
+                          color: isMe
                               ? CupertinoColors.white.withOpacity(0.7)
                               : CupertinoColors.systemGrey,
                         ),
                       ),
-                      if (message.isMe) ...[
+                      if (isMe) ...[
                         const SizedBox(width: 4),
-                        Icon(
-                          CupertinoIcons.checkmark_alt_circle_fill,
-                          size: 14,
-                          color: CupertinoColors.white.withOpacity(0.7),
-                        ),
+                        _buildStatusIcon(),
                       ],
                     ],
                   ),
@@ -272,10 +438,86 @@ class _MessageBubble extends StatelessWidget {
               ),
             ),
           ),
-          if (!message.isMe) const Spacer(flex: 1),
+          if (!isMe) const Spacer(flex: 1),
         ],
       ),
     );
+  }
+
+  Widget _buildContent() {
+    switch (message.type) {
+      case MessageType.text:
+        return Text(
+          message.content,
+          style: TextStyle(
+            fontSize: 16,
+            color: isMe ? CupertinoColors.white : CupertinoColors.black,
+          ),
+        );
+      case MessageType.image:
+        return const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(CupertinoIcons.photo, size: 20),
+            SizedBox(width: 8),
+            Text('Photo'),
+          ],
+        );
+      case MessageType.video:
+        return const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(CupertinoIcons.videocam, size: 20),
+            SizedBox(width: 8),
+            Text('Video'),
+          ],
+        );
+      case MessageType.audio:
+        return const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(CupertinoIcons.waveform, size: 20),
+            SizedBox(width: 8),
+            Text('Audio'),
+          ],
+        );
+      case MessageType.file:
+        return const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(CupertinoIcons.doc, size: 20),
+            SizedBox(width: 8),
+            Text('File'),
+          ],
+        );
+    }
+  }
+
+  Widget _buildStatusIcon() {
+    IconData icon;
+    Color color = CupertinoColors.white.withOpacity(0.7);
+
+    switch (message.status) {
+      case MessageStatus.sending:
+        icon = CupertinoIcons.clock;
+        break;
+      case MessageStatus.sent:
+        icon = CupertinoIcons.checkmark;
+        break;
+      case MessageStatus.delivered:
+        icon = CupertinoIcons.checkmark_alt_circle;
+        break;
+      case MessageStatus.read:
+        icon = CupertinoIcons.checkmark_alt_circle_fill;
+        color = CupertinoColors.white;
+        break;
+      case MessageStatus.failed:
+        icon = CupertinoIcons.exclamationmark_circle;
+        color = CupertinoColors.systemRed;
+        break;
+    }
+
+    return Icon(icon, size: 14, color: color);
   }
 
   String _formatTime(DateTime time) {

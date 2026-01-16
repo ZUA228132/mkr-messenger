@@ -22,6 +22,11 @@ class SecureLocalStorage {
   static const String _queueTable = 'offline_queue';
   static const String _dbKeyStorageKey = 'db_encryption_key';
   
+  // Token storage keys
+  // Requirements: 2.4, 2.6, 3.1 - Store JWT token and userId securely
+  static const String _jwtTokenKey = 'jwt_token';
+  static const String _userIdKey = 'user_id';
+  
   Uint8List? _encryptionKey;
 
   SecureLocalStorage({
@@ -320,6 +325,71 @@ class SecureLocalStorage {
       limit: 1,
     );
     return result.isNotEmpty;
+  }
+
+
+  // ============ JWT Token Storage Methods ============
+  // Requirements: 2.4, 2.6, 3.1 - Store JWT token in secure storage
+
+  /// Save JWT token to secure storage
+  /// Requirements: 2.4, 2.6 - Store JWT token securely after login/verification
+  Future<void> saveToken(String token) async {
+    await _secureStorage.write(_jwtTokenKey, token);
+  }
+
+  /// Get JWT token from secure storage
+  /// Requirements: 3.1 - Retrieve stored JWT token for authenticated requests
+  Future<String?> getToken() async {
+    return await _secureStorage.read(_jwtTokenKey);
+  }
+
+  /// Clear JWT token from secure storage
+  /// Requirements: 3.4 - Clear token on logout
+  Future<void> clearToken() async {
+    await _secureStorage.delete(_jwtTokenKey);
+  }
+
+  /// Check if a valid token exists
+  Future<bool> hasToken() async {
+    final token = await getToken();
+    return token != null && token.isNotEmpty;
+  }
+
+
+  // ============ User ID Storage Methods ============
+  // Requirements: 2.6 - Store userId securely after login
+
+  /// Save user ID to secure storage
+  /// Requirements: 2.6 - Store userId securely after login
+  Future<void> saveUserId(String userId) async {
+    await _secureStorage.write(_userIdKey, userId);
+  }
+
+  /// Get user ID from secure storage
+  Future<String?> getUserId() async {
+    return await _secureStorage.read(_userIdKey);
+  }
+
+  /// Clear user ID from secure storage
+  Future<void> clearUserId() async {
+    await _secureStorage.delete(_userIdKey);
+  }
+
+
+  /// Clear all authentication credentials (token and userId)
+  /// Requirements: 3.4 - Clear all stored credentials on logout
+  Future<void> clearCredentials() async {
+    await Future.wait([
+      clearToken(),
+      clearUserId(),
+    ]);
+  }
+
+  /// Check if user is authenticated (has both token and userId)
+  Future<bool> isAuthenticated() async {
+    final token = await getToken();
+    final userId = await getUserId();
+    return token != null && token.isNotEmpty && userId != null && userId.isNotEmpty;
   }
 
 

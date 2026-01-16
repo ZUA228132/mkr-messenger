@@ -1,24 +1,133 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../data/repositories/remote_auth_repository.dart';
+import '../../data/repositories/remote_chat_repository.dart';
+import '../../data/repositories/remote_user_repository.dart';
 import '../../domain/entities/chat.dart';
+import '../../domain/entities/user.dart';
 import 'chat_list_screen.dart';
 import 'settings_screen.dart';
 
 /// Main tab screen with bottom navigation
 /// Requirements: 8.1 - Use Cupertino widgets for native iOS look
+/// Requirements: 4.1-4.4 - Chat list integration with backend
 class MainTabScreen extends StatefulWidget {
   final String currentUserId;
+  final RemoteChatRepository chatRepository;
+  final RemoteUserRepository userRepository;
+  final RemoteAuthRepository authRepository;
+  final VoidCallback? onLogout;
 
-  const MainTabScreen({super.key, required this.currentUserId});
+  const MainTabScreen({
+    super.key,
+    required this.currentUserId,
+    required this.chatRepository,
+    required this.userRepository,
+    required this.authRepository,
+    this.onLogout,
+  });
 
   @override
   State<MainTabScreen> createState() => _MainTabScreenState();
 }
 
 class _MainTabScreenState extends State<MainTabScreen> {
-  // Demo chats for testing
-  final List<Chat> _chats = [];
+  List<Chat> _chats = [];
+  User? _currentUser;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    await Future.wait([
+      _loadChats(),
+      _loadCurrentUser(),
+    ]);
+  }
+
+  /// Requirements: 4.1 - GET /api/chats
+  Future<void> _loadChats() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final result = await widget.chatRepository.getChats();
+
+    if (!mounted) return;
+
+    result.fold(
+      onSuccess: (chats) {
+        setState(() {
+          _chats = chats;
+          _isLoading = false;
+        });
+      },
+      onFailure: (error) {
+        setState(() {
+          _errorMessage = error.message;
+          _isLoading = false;
+        });
+      },
+    );
+  }
+
+  /// Requirements: 7.1 - GET /api/users/{userId}
+  Future<void> _loadCurrentUser() async {
+    final result = await widget.userRepository.getCurrentUser();
+
+    if (!mounted) return;
+
+    result.fold(
+      onSuccess: (user) {
+        setState(() => _currentUser = user);
+      },
+      onFailure: (_) {
+        // Silently fail - we can still show the screen
+      },
+    );
+  }
+
+  /// Requirements: 4.4 - POST /api/chats with participantIds
+  Future<void> _createChat(String userId) async {
+    final result = await widget.chatRepository.getOrCreateDirectChat(userId);
+
+    if (!mounted) return;
+
+    result.fold(
+      onSuccess: (chat) {
+        // Navigate to the new chat
+        context.push('/chat/${chat.id}');
+        // Refresh chat list
+        _loadChats();
+      },
+      onFailure: (error) {
+        _showError(error.message);
+      },
+    );
+  }
+
+  void _showError(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,12 +158,11 @@ class _MainTabScreenState extends State<MainTabScreen> {
               builder: (context) => ChatListScreen(
                 chats: _chats,
                 currentUserId: widget.currentUserId,
+                isLoading: _isLoading,
+                errorMessage: _errorMessage,
                 onChatTap: (chat) => context.push('/chat/${chat.id}'),
                 onNewChat: () => _showNewChatDialog(context),
-                onRefresh: () async {
-                  // Refresh chats from server
-                  await Future.delayed(const Duration(seconds: 1));
-                },
+                onRefresh: _loadChats,
               ),
             );
           case 1:
@@ -64,8 +172,10 @@ class _MainTabScreenState extends State<MainTabScreen> {
           case 2:
             return CupertinoTabView(
               builder: (context) => SettingsScreen(
-                callsign: widget.currentUserId,
-                onLogout: () => context.go('/'),
+                user: _currentUser,
+                userRepository: widget.userRepository,
+                onLogout: widget.onLogout,
+                onProfileUpdated: _loadCurrentUser,
               ),
             );
           default:
@@ -74,6 +184,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
       },
     );
   }
+
 
   void _showNewChatDialog(BuildContext context) {
     final controller = TextEditingController();
@@ -86,7 +197,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
           padding: const EdgeInsets.only(top: 16),
           child: CupertinoTextField(
             controller: controller,
-            placeholder: 'Enter callsign',
+            placeholder: 'Enter username or search',
             prefix: const Padding(
               padding: EdgeInsets.only(left: 8),
               child: Text('@'),
@@ -102,16 +213,63 @@ class _MainTabScreenState extends State<MainTabScreen> {
           CupertinoDialogAction(
             isDefaultAction: true,
             onPressed: () {
-              final callsign = controller.text.trim();
-              if (callsign.isNotEmpty) {
+              final username = controller.text.trim();
+              if (username.isNotEmpty) {
                 Navigator.pop(context);
-                // Create new chat and navigate
-                context.push('/chat/$callsign');
+                _searchAndCreateChat(username);
               }
             },
             child: const Text('Start Chat'),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Requirements: 8.1-8.3 - Search users and create chat
+  Future<void> _searchAndCreateChat(String query) async {
+    // First search for the user
+    final searchResult = await widget.userRepository.searchUsers(query);
+
+    if (!mounted) return;
+
+    searchResult.fold(
+      onSuccess: (users) {
+        if (users.isEmpty) {
+          _showError('No users found with username "$query"');
+        } else if (users.length == 1) {
+          // Single result - create chat directly
+          _createChat(users.first.id);
+        } else {
+          // Multiple results - show selection dialog
+          _showUserSelectionDialog(users);
+        }
+      },
+      onFailure: (error) {
+        _showError(error.message);
+      },
+    );
+  }
+
+  void _showUserSelectionDialog(List<User> users) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Select User'),
+        actions: users.map((user) {
+          return CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _createChat(user.id);
+            },
+            child: Text('@${user.callsign}${user.displayName != null ? ' (${user.displayName})' : ''}'),
+          );
+        }).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          isDestructiveAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
       ),
     );
   }

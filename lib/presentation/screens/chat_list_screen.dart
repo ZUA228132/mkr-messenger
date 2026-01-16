@@ -4,10 +4,13 @@ import '../../domain/entities/chat.dart';
 import '../../domain/entities/message.dart';
 
 /// Screen displaying list of chats
+/// Requirements: 4.1-4.4 - Chat list with backend integration
 /// Requirements: 6.3 - Display messages in real-time with delivery status
 class ChatListScreen extends StatefulWidget {
   final List<Chat> chats;
   final String currentUserId;
+  final bool isLoading;
+  final String? errorMessage;
   final void Function(Chat chat)? onChatTap;
   final void Function()? onNewChat;
   final Future<void> Function()? onRefresh;
@@ -16,6 +19,8 @@ class ChatListScreen extends StatefulWidget {
     super.key,
     required this.chats,
     required this.currentUserId,
+    this.isLoading = false,
+    this.errorMessage,
     this.onChatTap,
     this.onNewChat,
     this.onRefresh,
@@ -38,9 +43,61 @@ class _ChatListScreenState extends State<ChatListScreen> {
         ),
       ),
       child: SafeArea(
-        child: widget.chats.isEmpty
-            ? _buildEmptyState()
-            : _buildChatList(),
+        child: _buildContent(),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (widget.isLoading && widget.chats.isEmpty) {
+      return const Center(
+        child: CupertinoActivityIndicator(),
+      );
+    }
+
+    if (widget.errorMessage != null && widget.chats.isEmpty) {
+      return _buildErrorState();
+    }
+
+    if (widget.chats.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return _buildChatList();
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            CupertinoIcons.exclamationmark_triangle,
+            size: 64,
+            color: CupertinoColors.systemRed,
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Failed to load chats',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.errorMessage!,
+            style: const TextStyle(
+              color: CupertinoColors.systemGrey,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          CupertinoButton.filled(
+            onPressed: widget.onRefresh,
+            child: const Text('Retry'),
+          ),
+        ],
       ),
     );
   }
@@ -180,6 +237,10 @@ class _ChatListItem extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      if (chat.unreadCount > 0) ...[
+                        const SizedBox(width: 8),
+                        _buildUnreadBadge(),
+                      ],
                     ],
                   ),
                 ],
@@ -219,6 +280,24 @@ class _ChatListItem extends StatelessWidget {
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: CupertinoColors.systemBlue,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUnreadBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: CupertinoColors.systemBlue,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        chat.unreadCount > 99 ? '99+' : chat.unreadCount.toString(),
+        style: const TextStyle(
+          color: CupertinoColors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

@@ -12,6 +12,7 @@ class Chat {
   final DateTime updatedAt;
   final String? name;
   final String? avatarUrl;
+  final int unreadCount;
 
   const Chat({
     required this.id,
@@ -21,6 +22,7 @@ class Chat {
     required this.updatedAt,
     this.name,
     this.avatarUrl,
+    this.unreadCount = 0,
   });
 
   Chat copyWith({
@@ -31,6 +33,7 @@ class Chat {
     DateTime? updatedAt,
     String? name,
     String? avatarUrl,
+    int? unreadCount,
   }) {
     return Chat(
       id: id ?? this.id,
@@ -40,6 +43,7 @@ class Chat {
       updatedAt: updatedAt ?? this.updatedAt,
       name: name ?? this.name,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      unreadCount: unreadCount ?? this.unreadCount,
     );
   }
 }

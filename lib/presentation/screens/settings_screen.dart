@@ -1,18 +1,32 @@
 import 'package:flutter/cupertino.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../data/repositories/remote_user_repository.dart';
+import '../../domain/entities/user.dart';
 
-/// Settings screen
+/// Settings screen with profile editing
+/// Requirements: 7.1-7.3 - User profile view and edit
 /// Requirements: 8.1 - Use Cupertino widgets for native iOS look
-class SettingsScreen extends StatelessWidget {
-  final String callsign;
+class SettingsScreen extends StatefulWidget {
+  final User? user;
+  final RemoteUserRepository? userRepository;
   final VoidCallback? onLogout;
+  final VoidCallback? onProfileUpdated;
 
   const SettingsScreen({
     super.key,
-    required this.callsign,
+    this.user,
+    this.userRepository,
     this.onLogout,
+    this.onProfileUpdated,
   });
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _isUpdating = false;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +51,9 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildProfileSection() {
+    final displayName = widget.user?.displayName ?? widget.user?.callsign ?? 'User';
+    final callsign = widget.user?.callsign ?? 'user';
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
@@ -46,51 +63,188 @@ class SettingsScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: CupertinoColors.systemBlue.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                callsign.isNotEmpty ? callsign[0].toUpperCase() : '?',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: CupertinoColors.systemBlue,
-                ),
-              ),
-            ),
-          ),
+          _buildAvatar(),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '@$callsign',
+                  displayName,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Online',
-                  style: TextStyle(
-                    color: CupertinoColors.systemGreen,
+                Text(
+                  '@$callsign',
+                  style: const TextStyle(
+                    color: CupertinoColors.systemGrey,
                     fontSize: 14,
                   ),
                 ),
+                if (widget.user?.isVerified == true) ...[
+                  const SizedBox(height: 4),
+                  const Row(
+                    children: [
+                      Icon(
+                        CupertinoIcons.checkmark_seal_fill,
+                        size: 14,
+                        color: CupertinoColors.systemBlue,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Verified',
+                        style: TextStyle(
+                          color: CupertinoColors.systemBlue,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
           CupertinoButton(
             padding: EdgeInsets.zero,
-            onPressed: () {},
+            onPressed: () => _showEditProfileDialog(context),
             child: const Icon(CupertinoIcons.pencil),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatar() {
+    final avatarUrl = widget.user?.avatarUrl;
+    final displayName = widget.user?.displayName ?? widget.user?.callsign ?? 'U';
+
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: CupertinoColors.systemBlue.withOpacity(0.2),
+        shape: BoxShape.circle,
+      ),
+      child: avatarUrl != null
+          ? ClipOval(
+              child: Image.network(
+                avatarUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _buildAvatarPlaceholder(displayName),
+              ),
+            )
+          : _buildAvatarPlaceholder(displayName),
+    );
+  }
+
+  Widget _buildAvatarPlaceholder(String name) {
+    return Center(
+      child: Text(
+        name.isNotEmpty ? name[0].toUpperCase() : '?',
+        style: const TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: CupertinoColors.systemBlue,
+        ),
+      ),
+    );
+  }
+
+
+  /// Requirements: 7.2 - POST /api/users/me
+  void _showEditProfileDialog(BuildContext context) {
+    final displayNameController = TextEditingController(
+      text: widget.user?.displayName ?? '',
+    );
+
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Edit Profile'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Column(
+            children: [
+              CupertinoTextField(
+                controller: displayNameController,
+                placeholder: 'Display Name',
+                padding: const EdgeInsets.all(12),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () async {
+              Navigator.pop(context);
+              await _updateProfile(displayNameController.text.trim());
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _updateProfile(String displayName) async {
+    if (widget.userRepository == null || displayName.isEmpty) return;
+
+    setState(() => _isUpdating = true);
+
+    final result = await widget.userRepository!.updateProfile(
+      displayName: displayName,
+    );
+
+    if (!mounted) return;
+
+    setState(() => _isUpdating = false);
+
+    result.fold(
+      onSuccess: (_) {
+        widget.onProfileUpdated?.call();
+        _showSuccess('Profile updated successfully');
+      },
+      onFailure: (error) {
+        _showError(error.message);
+      },
+    );
+  }
+
+  void _showSuccess(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Success'),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
           ),
         ],
       ),
@@ -160,11 +314,13 @@ class SettingsScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: CupertinoButton(
         color: CupertinoColors.systemRed.withOpacity(0.1),
-        onPressed: () => _showLogoutConfirmation(context),
-        child: const Text(
-          'Logout',
-          style: TextStyle(color: CupertinoColors.systemRed),
-        ),
+        onPressed: _isUpdating ? null : () => _showLogoutConfirmation(context),
+        child: _isUpdating
+            ? const CupertinoActivityIndicator()
+            : const Text(
+                'Logout',
+                style: TextStyle(color: CupertinoColors.systemRed),
+              ),
       ),
     );
   }
@@ -184,7 +340,7 @@ class SettingsScreen extends StatelessWidget {
             isDestructiveAction: true,
             onPressed: () {
               Navigator.pop(context);
-              onLogout?.call();
+              widget.onLogout?.call();
             },
             child: const Text('Logout'),
           ),

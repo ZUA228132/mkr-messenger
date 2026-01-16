@@ -5,6 +5,13 @@ import 'package:go_router/go_router.dart';
 
 import 'core/constants/app_constants.dart';
 import 'core/theme/mkr_cupertino_theme.dart';
+import 'data/datasources/api_client.dart';
+import 'data/datasources/secure_local_storage.dart';
+import 'data/datasources/websocket_service.dart';
+import 'data/repositories/remote_auth_repository.dart';
+import 'data/repositories/remote_chat_repository.dart';
+import 'data/repositories/remote_message_repository.dart';
+import 'data/repositories/remote_user_repository.dart';
 import 'data/services/push_notification_service.dart';
 import 'data/services/security_checker.dart';
 import 'presentation/screens/auth_screen.dart';
@@ -33,13 +40,78 @@ class MKRApp extends StatefulWidget {
 }
 
 class _MKRAppState extends State<MKRApp> {
-  String? _currentUser;
+  String? _currentUserId;
+  
+  // Backend integration services
+  late final ApiClient _apiClient;
+  late final SecureLocalStorage _storage;
+  late final WebSocketService _webSocketService;
+  late final RemoteAuthRepository _authRepository;
+  late final RemoteChatRepository _chatRepository;
+  late final RemoteMessageRepository _messageRepository;
+  late final RemoteUserRepository _userRepository;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeServices();
+  }
+
+  void _initializeServices() {
+    _apiClient = ApiClient();
+    _storage = SecureLocalStorage();
+    _webSocketService = WebSocketService();
+    
+    _authRepository = RemoteAuthRepository(
+      apiClient: _apiClient,
+      storage: _storage,
+    );
+    
+    _chatRepository = RemoteChatRepository(apiClient: _apiClient);
+    _messageRepository = RemoteMessageRepository(
+      apiClient: _apiClient,
+      webSocketService: _webSocketService,
+    );
+    _userRepository = RemoteUserRepository(apiClient: _apiClient);
+    
+    // Set up unauthorized callback for token expiration
+    // Requirements: 3.3 - Redirect to login when token expires
+    _apiClient.setOnUnauthorized(() {
+      _handleLogout();
+    });
+  }
+
+  Future<void> _handleAuthenticated(String userId) async {
+    setState(() => _currentUserId = userId);
+    
+    // Connect WebSocket after authentication
+    // Requirements: 6.1 - Establish WebSocket connection
+    await _webSocketService.connect(userId);
+  }
+
+  Future<void> _handleLogout() async {
+    // Disconnect WebSocket
+    await _webSocketService.disconnect();
+    
+    // Clear credentials
+    // Requirements: 3.4 - Clear all stored credentials
+    await _authRepository.logout();
+    
+    setState(() => _currentUserId = null);
+  }
+
+  @override
+  void dispose() {
+    _webSocketService.dispose();
+    _messageRepository.dispose();
+    super.dispose();
+  }
 
   late final GoRouter _router = GoRouter(
     initialLocation: '/auth',
     redirect: (context, state) {
       final isAuth = state.matchedLocation == '/auth';
-      final isLoggedIn = _currentUser != null;
+      final isLoggedIn = _currentUserId != null;
 
       if (!isLoggedIn && !isAuth) return '/auth';
       if (isLoggedIn && isAuth) return '/home';
@@ -49,8 +121,8 @@ class _MKRAppState extends State<MKRApp> {
       GoRoute(
         path: '/auth',
         builder: (context, state) => AuthScreen(
-          onAuthenticated: (callsign) {
-            setState(() => _currentUser = callsign);
+          onAuthenticated: (userId) {
+            _handleAuthenticated(userId);
             context.go('/home');
           },
         ),
@@ -58,7 +130,14 @@ class _MKRAppState extends State<MKRApp> {
       GoRoute(
         path: '/home',
         builder: (context, state) => MainTabScreen(
-          currentUserId: _currentUser ?? 'user',
+          currentUserId: _currentUserId ?? 'user',
+          chatRepository: _chatRepository,
+          userRepository: _userRepository,
+          authRepository: _authRepository,
+          onLogout: () {
+            _handleLogout();
+            context.go('/auth');
+          },
         ),
       ),
       GoRoute(
@@ -67,7 +146,9 @@ class _MKRAppState extends State<MKRApp> {
           final chatId = state.pathParameters['chatId'] ?? '';
           return SimpleChatScreen(
             recipientId: chatId,
-            currentUserId: _currentUser ?? 'user',
+            currentUserId: _currentUserId ?? 'user',
+            messageRepository: _messageRepository,
+            webSocketService: _webSocketService,
             onBack: () => context.pop(),
           );
         },
@@ -83,7 +164,7 @@ class _MKRAppState extends State<MKRApp> {
         builder: (context, state) => SimplePanicScreen(
           onWipeComplete: () {
             // Wipe all data and logout
-            setState(() => _currentUser = null);
+            _handleLogout();
             context.go('/auth');
           },
         ),
