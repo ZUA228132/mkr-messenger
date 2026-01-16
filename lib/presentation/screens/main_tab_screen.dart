@@ -142,6 +142,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
                 onChatTap: (chat) => context.push('/chat/${chat.id}'),
                 onNewChat: () => _showNewChat(context),
                 onRefresh: _loadChats,
+                userRepository: widget.userRepository,
               ),
             );
           case 1:

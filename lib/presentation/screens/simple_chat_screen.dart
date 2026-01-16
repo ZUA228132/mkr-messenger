@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 
 import '../../data/datasources/websocket_service.dart';
+import '../../data/repositories/remote_chat_repository.dart';
 import '../../data/repositories/remote_message_repository.dart';
 import '../../data/repositories/remote_user_repository.dart';
+import '../../domain/entities/chat.dart';
 import '../../domain/entities/message.dart';
 import '../../domain/entities/user.dart';
 
@@ -12,19 +14,21 @@ import '../../domain/entities/user.dart';
 /// Requirements: 5.1-5.4 - Message retrieval, display, sending, real-time updates
 /// Requirements: 6.3 - Send typing indicators
 class SimpleChatScreen extends StatefulWidget {
-  final String recipientId;
+  final String chatId;
   final String currentUserId;
   final RemoteMessageRepository? messageRepository;
   final RemoteUserRepository? userRepository;
+  final RemoteChatRepository? chatRepository;
   final WebSocketService? webSocketService;
   final VoidCallback? onBack;
 
   const SimpleChatScreen({
     super.key,
-    required this.recipientId,
+    required this.chatId,
     required this.currentUserId,
     this.messageRepository,
     this.userRepository,
+    this.chatRepository,
     this.webSocketService,
     this.onBack,
   });
@@ -37,7 +41,9 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   List<Message> _messages = [];
+  Chat? _chat;
   User? _recipientUser;
+  String? _recipientUserId;
   bool _isLoading = false;
   bool _isLoadingMore = false;
   bool _hasMore = true;
@@ -55,8 +61,8 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
   @override
   void initState() {
     super.initState();
+    _loadChatInfo();
     _loadMessages();
-    _loadRecipientUser();
     _subscribeToMessages();
     _subscribeToConnectionState();
     _scrollController.addListener(_onScroll);
@@ -73,16 +79,47 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     super.dispose();
   }
 
+  /// Load chat info and then recipient user
+  Future<void> _loadChatInfo() async {
+    if (widget.chatRepository == null) {
+      // Fallback: try to load user directly by chatId (old behavior)
+      _loadRecipientUser(widget.chatId);
+      return;
+    }
+    
+    final result = await widget.chatRepository!.getChat(widget.chatId);
+    if (!mounted) return;
+    
+    result.fold(
+      onSuccess: (chat) {
+        setState(() => _chat = chat);
+        // Find recipient (participant who is not current user)
+        final recipientId = chat.participantIds.firstWhere(
+          (id) => id != widget.currentUserId,
+          orElse: () => chat.participantIds.isNotEmpty ? chat.participantIds.first : '',
+        );
+        if (recipientId.isNotEmpty) {
+          setState(() => _recipientUserId = recipientId);
+          _loadRecipientUser(recipientId);
+        }
+      },
+      onFailure: (_) {
+        // Fallback: try to load user directly
+        _loadRecipientUser(widget.chatId);
+      },
+    );
+  }
+
   /// Load recipient user info
-  Future<void> _loadRecipientUser() async {
+  Future<void> _loadRecipientUser(String userId) async {
     if (widget.userRepository == null) return;
     
-    final result = await widget.userRepository!.getUser(widget.recipientId);
+    final result = await widget.userRepository!.getUser(userId);
     if (!mounted) return;
     
     result.fold(
       onSuccess: (user) => setState(() => _recipientUser = user),
-      onFailure: (_) {}, // Silently fail, will show recipientId as fallback
+      onFailure: (_) {}, // Silently fail, will show chatId as fallback
     );
   }
 
@@ -102,7 +139,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
     final oldestMessage = _messages.last;
     final result = await widget.messageRepository!.getMessages(
-      widget.recipientId,
+      widget.chatId,
       limit: 20,
       before: oldestMessage.id,
     );
@@ -129,7 +166,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
   /// Requirements: 5.4 - Handle new messages via WebSocket
   void _subscribeToMessages() {
     _messageSubscription = widget.messageRepository?.newMessages.listen((message) {
-      if (message.chatId == widget.recipientId && mounted) {
+      if (message.chatId == widget.chatId && mounted) {
         setState(() {
           _messages.insert(0, message);
         });
@@ -157,7 +194,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     });
 
     final result = await widget.messageRepository!.getMessages(
-      widget.recipientId,
+      widget.chatId,
       limit: 50,
     );
 
@@ -193,7 +230,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
       setState(() {
         _messages.insert(0, Message(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
-          chatId: widget.recipientId,
+          chatId: widget.chatId,
           senderId: widget.currentUserId,
           content: content,
           type: MessageType.text,
@@ -208,7 +245,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
     final optimisticMessage = Message(
       id: tempId,
-      chatId: widget.recipientId,
+      chatId: widget.chatId,
       senderId: widget.currentUserId,
       content: content,
       type: MessageType.text,
@@ -222,7 +259,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     });
 
     final result = await widget.messageRepository!.sendMessage(
-      chatId: widget.recipientId,
+      chatId: widget.chatId,
       content: content,
     );
 
@@ -246,7 +283,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           if (index != -1) {
             _messages[index] = Message(
               id: tempId,
-              chatId: widget.recipientId,
+              chatId: widget.chatId,
               senderId: widget.currentUserId,
               content: content,
               type: MessageType.text,
@@ -264,7 +301,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
   /// Requirements: 6.3 - Send typing events via WebSocket
   void _onTyping() {
     _typingTimer?.cancel();
-    widget.messageRepository?.sendTypingIndicator(widget.recipientId);
+    widget.messageRepository?.sendTypingIndicator(widget.chatId);
     
     // Debounce typing events
     _typingTimer = Timer(const Duration(seconds: 3), () {});
@@ -326,7 +363,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
     final optimisticMessage = Message(
       id: tempId,
-      chatId: widget.recipientId,
+      chatId: widget.chatId,
       senderId: widget.currentUserId,
       content: _isRecordingVideo ? 'Видео-кружок' : 'Голосовое сообщение',
       type: type,
@@ -445,7 +482,11 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final displayName = _recipientUser?.displayName ?? _recipientUser?.callsign ?? widget.recipientId;
+    // Use recipient user info, or chat name, or loading placeholder
+    final displayName = _recipientUser?.displayName ?? 
+                        _recipientUser?.callsign ?? 
+                        _chat?.name ?? 
+                        (_isLoading ? 'Загрузка...' : 'Чат');
     final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
     
     return CupertinoPageScaffold(
@@ -604,7 +645,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
             Expanded(
               child: _UserProfileContent(
                 user: _recipientUser,
-                recipientId: widget.recipientId,
+                recipientId: widget.chatId,
                 onClose: () => Navigator.pop(ctx),
                 onCall: () {
                   Navigator.pop(ctx);
@@ -668,6 +709,12 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     }
 
     if (_messages.isEmpty) {
+      final emptyDisplayName = _recipientUser?.displayName ?? 
+                               _recipientUser?.callsign ?? 
+                               _chat?.name ?? 
+                               'Новый чат';
+      final emptyFirstLetter = emptyDisplayName.isNotEmpty ? emptyDisplayName[0].toUpperCase() : '?';
+      
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -681,9 +728,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
               ),
               child: Center(
                 child: Text(
-                  widget.recipientId.isNotEmpty 
-                      ? widget.recipientId[0].toUpperCase() 
-                      : '?',
+                  emptyFirstLetter,
                   style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -694,12 +739,22 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              '@${widget.recipientId}',
+              emptyDisplayName,
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
               ),
             ),
+            if (_recipientUser?.callsign != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                '@${_recipientUser!.callsign}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             const Icon(
               CupertinoIcons.lock_shield,
@@ -764,7 +819,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     });
 
     final result = await widget.messageRepository!.sendMessage(
-      chatId: widget.recipientId,
+      chatId: widget.chatId,
       content: failedMessage.content,
     );
 

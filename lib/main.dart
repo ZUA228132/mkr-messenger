@@ -158,10 +158,11 @@ class _MKRAppState extends State<MKRApp> {
         builder: (context, state) {
           final chatId = state.pathParameters['chatId'] ?? '';
           return SimpleChatScreen(
-            recipientId: chatId,
+            chatId: chatId,
             currentUserId: _currentUserId ?? 'user',
             messageRepository: _messageRepository,
             userRepository: _userRepository,
+            chatRepository: _chatRepository,
             webSocketService: _webSocketService,
             onBack: () => context.pop(),
           );
