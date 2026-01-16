@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// API configuration for MKR Messenger backend integration.
 /// 
 /// Provides base URLs for development and production environments,
@@ -10,12 +8,12 @@ class ApiConfig {
   ApiConfig._();
 
   // Base URLs
-  static const String devBaseUrl = 'http://localhost:8080';
+  static const String devBaseUrl = 'https://kluboksrm.ru'; // Use prod URL for testing on device
   static const String prodBaseUrl = 'https://kluboksrm.ru';
 
   /// Returns the appropriate base URL based on build mode.
-  /// Uses devBaseUrl in debug mode, prodBaseUrl in release mode.
-  static String get baseUrl => kDebugMode ? devBaseUrl : prodBaseUrl;
+  /// Note: Using prod URL for both modes since localhost doesn't work on devices
+  static String get baseUrl => prodBaseUrl;
 
   /// WebSocket URL derived from base URL.
   /// Replaces http/https with ws/wss protocol.

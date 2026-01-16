@@ -293,7 +293,18 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           }
           _isSending = false;
         });
-        _showError('Не удалось отправить: ${error.message}');
+        // Show more user-friendly error message
+        String errorMsg = 'Не удалось отправить сообщение';
+        if (error.statusCode == 401) {
+          errorMsg = 'Сессия истекла. Войдите заново';
+        } else if (error.statusCode == 404) {
+          errorMsg = 'Чат не найден';
+        } else if (error.statusCode == 500) {
+          errorMsg = 'Ошибка сервера. Попробуйте позже';
+        } else if (error.message.contains('network') || error.message.contains('connection')) {
+          errorMsg = 'Нет подключения к интернету';
+        }
+        _showError(errorMsg);
       },
     );
   }
