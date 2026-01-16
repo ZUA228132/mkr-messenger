@@ -1007,7 +1007,7 @@ class _MessageBubble extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isMe
                     ? CupertinoColors.systemBlue
-                    : CupertinoColors.systemGrey5,
+                    : CupertinoColors.systemGrey5.resolveFrom(context),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(18),
                   topRight: const Radius.circular(18),
@@ -1018,7 +1018,7 @@ class _MessageBubble extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  _buildContent(),
+                  _buildContent(context),
                   const SizedBox(height: 4),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1029,7 +1029,7 @@ class _MessageBubble extends StatelessWidget {
                           fontSize: 11,
                           color: isMe
                               ? CupertinoColors.white.withAlpha(179)
-                              : CupertinoColors.systemGrey,
+                              : CupertinoColors.secondaryLabel.resolveFrom(context),
                         ),
                       ),
                       if (isMe) ...[
@@ -1048,72 +1048,69 @@ class _MessageBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
+    final textColor = isMe ? CupertinoColors.white : CupertinoColors.label.resolveFrom(context);
+    
     switch (message.type) {
       case MessageType.text:
         return Text(
           message.content,
           style: TextStyle(
             fontSize: 16,
-            color: isMe ? CupertinoColors.white : CupertinoColors.black,
+            color: textColor,
           ),
         );
       case MessageType.image:
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(CupertinoIcons.photo, size: 20, 
-              color: isMe ? CupertinoColors.white : CupertinoColors.black),
+            Icon(CupertinoIcons.photo, size: 20, color: textColor),
             const SizedBox(width: 8),
-            Text('Фото', style: TextStyle(
-              color: isMe ? CupertinoColors.white : CupertinoColors.black)),
+            Text('Фото', style: TextStyle(color: textColor)),
           ],
         );
       case MessageType.video:
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(CupertinoIcons.videocam, size: 20,
-              color: isMe ? CupertinoColors.white : CupertinoColors.black),
+            Icon(CupertinoIcons.videocam, size: 20, color: textColor),
             const SizedBox(width: 8),
-            Text('Видео', style: TextStyle(
-              color: isMe ? CupertinoColors.white : CupertinoColors.black)),
+            Text('Видео', style: TextStyle(color: textColor)),
           ],
         );
       case MessageType.audio:
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(CupertinoIcons.waveform, size: 20,
-              color: isMe ? CupertinoColors.white : CupertinoColors.black),
+            Icon(CupertinoIcons.waveform, size: 20, color: textColor),
             const SizedBox(width: 8),
-            Text('Аудио', style: TextStyle(
-              color: isMe ? CupertinoColors.white : CupertinoColors.black)),
+            Text('Аудио', style: TextStyle(color: textColor)),
           ],
         );
       case MessageType.file:
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(CupertinoIcons.doc, size: 20,
-              color: isMe ? CupertinoColors.white : CupertinoColors.black),
+            Icon(CupertinoIcons.doc, size: 20, color: textColor),
             const SizedBox(width: 8),
-            Text('Файл', style: TextStyle(
-              color: isMe ? CupertinoColors.white : CupertinoColors.black)),
+            Text('Файл', style: TextStyle(color: textColor)),
           ],
         );
       case MessageType.voiceNote:
-        return _buildVoiceNote();
+        return _buildVoiceNote(context);
       case MessageType.videoNote:
-        return _buildVideoNote();
+        return _buildVideoNote(context);
     }
   }
 
-  Widget _buildVoiceNote() {
+  Widget _buildVoiceNote(BuildContext context) {
     final duration = message.duration ?? 0;
     final mins = duration ~/ 60;
     final secs = duration % 60;
     final durationText = '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+    final secondaryColor = isMe 
+        ? CupertinoColors.white.withAlpha(179)
+        : CupertinoColors.secondaryLabel.resolveFrom(context);
     
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -1144,9 +1141,7 @@ class _MessageBubble extends StatelessWidget {
                 height: 8 + (i % 3) * 4.0,
                 margin: const EdgeInsets.symmetric(horizontal: 1),
                 decoration: BoxDecoration(
-                  color: isMe 
-                      ? CupertinoColors.white.withAlpha(179)
-                      : CupertinoColors.systemGrey,
+                  color: secondaryColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               )),
@@ -1156,9 +1151,7 @@ class _MessageBubble extends StatelessWidget {
               durationText,
               style: TextStyle(
                 fontSize: 12,
-                color: isMe 
-                    ? CupertinoColors.white.withAlpha(179)
-                    : CupertinoColors.systemGrey,
+                color: secondaryColor,
               ),
             ),
           ],
@@ -1167,7 +1160,7 @@ class _MessageBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildVideoNote() {
+  Widget _buildVideoNote(BuildContext context) {
     final duration = message.duration ?? 0;
     final mins = duration ~/ 60;
     final secs = duration % 60;
@@ -1180,9 +1173,7 @@ class _MessageBubble extends StatelessWidget {
           width: 200,
           height: 200,
           decoration: BoxDecoration(
-            color: isMe 
-                ? CupertinoColors.white.withAlpha(51)
-                : CupertinoColors.systemPurple.withAlpha(51),
+            color: CupertinoColors.systemPurple.withAlpha(51),
             shape: BoxShape.circle,
             border: Border.all(
               color: CupertinoColors.systemPurple,
@@ -1192,10 +1183,10 @@ class _MessageBubble extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              Icon(
+              const Icon(
                 CupertinoIcons.play_circle_fill,
                 size: 48,
-                color: isMe ? CupertinoColors.white : CupertinoColors.systemPurple,
+                color: CupertinoColors.systemPurple,
               ),
               Positioned(
                 bottom: 16,
