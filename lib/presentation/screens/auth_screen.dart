@@ -22,7 +22,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final _pinController = TextEditingController();
   final _lockoutManager = LockoutManager();
   final _biometricService = BiometricService();
-  
+
   bool _isLoading = false;
   bool _obscurePin = true;
   String? _errorMessage;
@@ -49,9 +49,8 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _authenticate() async {
-    // Check lockout
     if (_lockoutManager.isLockedOut) {
-      final remaining = _lockoutManager.remainingLockoutTime;
+      final remaining = _lockoutManager.remainingLockoutDuration;
       setState(() {
         _errorMessage = 'Too many attempts. Try again in ${remaining.inSeconds}s';
       });
@@ -61,14 +60,12 @@ class _AuthScreenState extends State<AuthScreen> {
     final callsign = _callsignController.text.trim();
     final pin = _pinController.text;
 
-    // Validate callsign
     final callsignResult = CallsignValidator.validate(callsign);
     if (!callsignResult.isValid) {
       setState(() => _errorMessage = callsignResult.error);
       return;
     }
 
-    // Validate PIN (4-6 digits)
     if (pin.length < 4 || pin.length > 6 || !RegExp(r'^\d+$').hasMatch(pin)) {
       setState(() => _errorMessage = 'PIN must be 4-6 digits');
       return;
@@ -79,13 +76,10 @@ class _AuthScreenState extends State<AuthScreen> {
       _errorMessage = null;
     });
 
-    // Simulate auth delay
     await Future.delayed(const Duration(milliseconds: 500));
 
-    // For demo: accept any valid callsign/PIN
-    // In production, this would verify against server
-    _lockoutManager.recordSuccess();
-    
+    _lockoutManager.reset();
+
     if (mounted) {
       setState(() => _isLoading = false);
       widget.onAuthenticated?.call(callsign);
@@ -100,7 +94,7 @@ class _AuthScreenState extends State<AuthScreen> {
     );
 
     if (success && mounted) {
-      widget.onAuthenticated?.call('user'); // Use stored callsign in production
+      widget.onAuthenticated?.call('user');
     }
   }
 
@@ -155,18 +149,12 @@ class _AuthScreenState extends State<AuthScreen> {
         const SizedBox(height: 16),
         const Text(
           AppConstants.appName,
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         const Text(
           'Secure. Private. Protected.',
-          style: TextStyle(
-            fontSize: 14,
-            color: CupertinoColors.systemGrey,
-          ),
+          style: TextStyle(fontSize: 14, color: CupertinoColors.systemGrey),
         ),
       ],
     );
@@ -176,13 +164,7 @@ class _AuthScreenState extends State<AuthScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Callsign',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        const Text('Callsign', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         CupertinoTextField(
           controller: _callsignController,
@@ -207,13 +189,7 @@ class _AuthScreenState extends State<AuthScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'PIN',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        const Text('PIN', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         CupertinoTextField(
           controller: _pinController,
@@ -254,20 +230,10 @@ class _AuthScreenState extends State<AuthScreen> {
       ),
       child: Row(
         children: [
-          const Icon(
-            CupertinoIcons.exclamationmark_circle,
-            color: CupertinoColors.systemRed,
-            size: 18,
-          ),
+          const Icon(CupertinoIcons.exclamationmark_circle, color: CupertinoColors.systemRed, size: 18),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              _errorMessage!,
-              style: const TextStyle(
-                color: CupertinoColors.systemRed,
-                fontSize: 13,
-              ),
-            ),
+            child: Text(_errorMessage!, style: const TextStyle(color: CupertinoColors.systemRed, fontSize: 13)),
           ),
         ],
       ),
@@ -286,9 +252,9 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget _buildBiometricButton() {
     return CupertinoButton(
       onPressed: _authenticateWithBiometric,
-      child: Row(
+      child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           Icon(CupertinoIcons.person_crop_circle),
           SizedBox(width: 8),
           Text('Use Face ID / Touch ID'),
