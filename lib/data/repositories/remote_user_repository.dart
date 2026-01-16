@@ -1,6 +1,6 @@
 import 'dart:developer' as developer;
 
-import '../../core/errors/failures.dart';
+import '../../core/error/api_error.dart';
 import '../../core/result/result.dart';
 import '../../domain/entities/user.dart';
 import '../datasources/api_client.dart';
@@ -47,7 +47,7 @@ class RemoteUserRepository {
             'Failed to parse user response: $e',
             name: 'RemoteUserRepository',
           );
-          return Error(ServerFailure('Failed to parse user: $e'));
+          return Failure(ApiError(message: 'Failed to parse user: $e'));
         }
       },
       onFailure: (apiError) {
@@ -55,11 +55,10 @@ class RemoteUserRepository {
           'Failed to fetch user: ${apiError.message}',
           name: 'RemoteUserRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }
-
 
   /// Get current user profile
   /// Requirements: 7.1 - GET /api/users/{userId} (for current user)
@@ -90,7 +89,7 @@ class RemoteUserRepository {
             'Failed to parse current user response: $e',
             name: 'RemoteUserRepository',
           );
-          return Error(ServerFailure('Failed to parse user: $e'));
+          return Failure(ApiError(message: 'Failed to parse user: $e'));
         }
       },
       onFailure: (apiError) {
@@ -98,7 +97,7 @@ class RemoteUserRepository {
           'Failed to fetch current user: ${apiError.message}',
           name: 'RemoteUserRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }
@@ -143,7 +142,7 @@ class RemoteUserRepository {
             'Failed to parse update profile response: $e',
             name: 'RemoteUserRepository',
           );
-          return Error(ServerFailure('Failed to parse user: $e'));
+          return Failure(ApiError(message: 'Failed to parse user: $e'));
         }
       },
       onFailure: (apiError) {
@@ -151,11 +150,10 @@ class RemoteUserRepository {
           'Failed to update profile: ${apiError.message}',
           name: 'RemoteUserRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }
-
 
   /// Update user avatar
   /// Requirements: 7.3 - POST /api/users/me/avatar
@@ -191,7 +189,7 @@ class RemoteUserRepository {
             'Failed to parse update avatar response: $e',
             name: 'RemoteUserRepository',
           );
-          return Error(ServerFailure('Failed to parse user: $e'));
+          return Failure(ApiError(message: 'Failed to parse user: $e'));
         }
       },
       onFailure: (apiError) {
@@ -199,7 +197,7 @@ class RemoteUserRepository {
           'Failed to update avatar: ${apiError.message}',
           name: 'RemoteUserRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }
@@ -237,7 +235,7 @@ class RemoteUserRepository {
             'Failed to parse upload avatar response: $e',
             name: 'RemoteUserRepository',
           );
-          return Error(ServerFailure('Failed to parse user: $e'));
+          return Failure(ApiError(message: 'Failed to parse user: $e'));
         }
       },
       onFailure: (apiError) {
@@ -245,11 +243,10 @@ class RemoteUserRepository {
           'Failed to upload avatar: ${apiError.message}',
           name: 'RemoteUserRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }
-
 
   /// Search users by query
   /// Requirements: 8.1 - GET /api/users/search?q={query}
@@ -282,7 +279,7 @@ class RemoteUserRepository {
             'Failed to parse search users response: $e',
             name: 'RemoteUserRepository',
           );
-          return Error(ServerFailure('Failed to parse users: $e'));
+          return Failure(ApiError(message: 'Failed to parse users: $e'));
         }
       },
       onFailure: (apiError) {
@@ -290,7 +287,7 @@ class RemoteUserRepository {
           'Failed to search users: ${apiError.message}',
           name: 'RemoteUserRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }
@@ -326,7 +323,7 @@ class RemoteUserRepository {
           'Failed to update FCM token: ${apiError.message}',
           name: 'RemoteUserRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }
@@ -358,7 +355,7 @@ class RemoteUserRepository {
             'Failed to parse online status response: $e',
             name: 'RemoteUserRepository',
           );
-          return Error(ServerFailure('Failed to parse status: $e'));
+          return Failure(ApiError(message: 'Failed to parse status: $e'));
         }
       },
       onFailure: (apiError) {
@@ -366,7 +363,7 @@ class RemoteUserRepository {
           'Failed to get online status: ${apiError.message}',
           name: 'RemoteUserRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }

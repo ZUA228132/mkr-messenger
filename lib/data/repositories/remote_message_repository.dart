@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
-import '../../core/errors/failures.dart';
+import '../../core/error/api_error.dart';
 import '../../core/result/result.dart';
 import '../../domain/entities/message.dart';
 import '../datasources/api_client.dart';
@@ -100,7 +100,7 @@ class RemoteMessageRepository {
             'Failed to parse messages response: $e',
             name: 'RemoteMessageRepository',
           );
-          return Error(ServerFailure('Failed to parse messages: $e'));
+          return Failure(ApiError(message: 'Failed to parse messages: $e'));
         }
       },
       onFailure: (apiError) {
@@ -108,7 +108,7 @@ class RemoteMessageRepository {
           'Failed to fetch messages: ${apiError.message}',
           name: 'RemoteMessageRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }
@@ -127,7 +127,7 @@ class RemoteMessageRepository {
     );
 
     developer.log(
-      'Sending message to chat: $chatId (type: $type)',
+      'Sending message to chat: $chatId (type: $type, content: ${content.substring(0, content.length > 20 ? 20 : content.length)}...)',
       name: 'RemoteMessageRepository',
     );
 
@@ -139,6 +139,10 @@ class RemoteMessageRepository {
     return result.fold(
       onSuccess: (response) {
         try {
+          developer.log(
+            'Send message response: ${response.data}',
+            name: 'RemoteMessageRepository',
+          );
           final messageResponse = MessageResponse.fromJson(
             response.data as Map<String, dynamic>,
           );
@@ -155,7 +159,7 @@ class RemoteMessageRepository {
             'Failed to parse send message response: $e',
             name: 'RemoteMessageRepository',
           );
-          return Error(ServerFailure('Failed to parse message: $e'));
+          return Failure(ApiError(message: 'Failed to parse message: $e'));
         }
       },
       onFailure: (apiError) {
@@ -163,7 +167,7 @@ class RemoteMessageRepository {
           'Failed to send message: ${apiError.message}',
           name: 'RemoteMessageRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }
@@ -203,7 +207,7 @@ class RemoteMessageRepository {
           'Failed to mark messages as read: ${apiError.message}',
           name: 'RemoteMessageRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }
@@ -230,7 +234,7 @@ class RemoteMessageRepository {
           'Failed to delete message: ${apiError.message}',
           name: 'RemoteMessageRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }

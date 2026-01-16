@@ -34,6 +34,8 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
   final _scrollController = ScrollController();
   List<Message> _messages = [];
   bool _isLoading = false;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
   bool _isSending = false;
   String? _errorMessage;
   StreamSubscription<Message>? _messageSubscription;
@@ -47,6 +49,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     _loadMessages();
     _subscribeToMessages();
     _subscribeToConnectionState();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
@@ -57,6 +60,46 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     _connectionSubscription?.cancel();
     _typingTimer?.cancel();
     super.dispose();
+  }
+
+  /// Load more messages when scrolling to top
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreMessages();
+    }
+  }
+
+  /// Load older messages (pagination)
+  Future<void> _loadMoreMessages() async {
+    if (_isLoadingMore || !_hasMore || _messages.isEmpty) return;
+    if (widget.messageRepository == null) return;
+
+    setState(() => _isLoadingMore = true);
+
+    final oldestMessage = _messages.last;
+    final result = await widget.messageRepository!.getMessages(
+      widget.recipientId,
+      limit: 20,
+      before: oldestMessage.id,
+    );
+
+    if (!mounted) return;
+
+    result.fold(
+      onSuccess: (messages) {
+        setState(() {
+          if (messages.isEmpty) {
+            _hasMore = false;
+          } else {
+            _messages.addAll(messages);
+          }
+          _isLoadingMore = false;
+        });
+      },
+      onFailure: (error) {
+        setState(() => _isLoadingMore = false);
+      },
+    );
   }
 
   /// Requirements: 5.4 - Handle new messages via WebSocket
@@ -89,7 +132,10 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
       _errorMessage = null;
     });
 
-    final result = await widget.messageRepository!.getMessages(widget.recipientId);
+    final result = await widget.messageRepository!.getMessages(
+      widget.recipientId,
+      limit: 50,
+    );
 
     if (!mounted) return;
 
@@ -98,6 +144,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         setState(() {
           _messages = messages;
           _isLoading = false;
+          _hasMore = messages.length >= 50;
         });
       },
       onFailure: (error) {
@@ -114,6 +161,9 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     final content = _messageController.text.trim();
     if (content.isEmpty) return;
 
+    // Clear input immediately for better UX
+    _messageController.clear();
+
     if (widget.messageRepository == null) {
       // Fallback to local-only mode
       setState(() {
@@ -127,11 +177,25 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           status: MessageStatus.sent,
         ));
       });
-      _messageController.clear();
       return;
     }
 
-    setState(() => _isSending = true);
+    // Add optimistic message
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    final optimisticMessage = Message(
+      id: tempId,
+      chatId: widget.recipientId,
+      senderId: widget.currentUserId,
+      content: content,
+      type: MessageType.text,
+      timestamp: DateTime.now(),
+      status: MessageStatus.sending,
+    );
+
+    setState(() {
+      _messages.insert(0, optimisticMessage);
+      _isSending = true;
+    });
 
     final result = await widget.messageRepository!.sendMessage(
       chatId: widget.recipientId,
@@ -143,14 +207,32 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     result.fold(
       onSuccess: (message) {
         setState(() {
-          _messages.insert(0, message);
+          // Replace optimistic message with real one
+          final index = _messages.indexWhere((m) => m.id == tempId);
+          if (index != -1) {
+            _messages[index] = message;
+          }
           _isSending = false;
         });
-        _messageController.clear();
       },
       onFailure: (error) {
-        setState(() => _isSending = false);
-        _showError(error.message);
+        setState(() {
+          // Mark message as failed
+          final index = _messages.indexWhere((m) => m.id == tempId);
+          if (index != -1) {
+            _messages[index] = Message(
+              id: tempId,
+              chatId: widget.recipientId,
+              senderId: widget.currentUserId,
+              content: content,
+              type: MessageType.text,
+              timestamp: DateTime.now(),
+              status: MessageStatus.failed,
+            );
+          }
+          _isSending = false;
+        });
+        _showError('Не удалось отправить: ${error.message}');
       },
     );
   }
@@ -322,11 +404,78 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
       controller: _scrollController,
       reverse: true,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: _messages.length,
+      itemCount: _messages.length + (_isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
+        // Show loading indicator at the end (top when reversed)
+        if (index == _messages.length) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CupertinoActivityIndicator()),
+          );
+        }
         final message = _messages[index];
         final isMe = message.senderId == widget.currentUserId;
-        return _MessageBubble(message: message, isMe: isMe);
+        return _MessageBubble(
+          message: message,
+          isMe: isMe,
+          onRetry: message.status == MessageStatus.failed ? () => _retrySendMessage(message) : null,
+        );
+      },
+    );
+  }
+
+  /// Retry sending a failed message
+  Future<void> _retrySendMessage(Message failedMessage) async {
+    if (widget.messageRepository == null) return;
+
+    // Update status to sending
+    setState(() {
+      final index = _messages.indexWhere((m) => m.id == failedMessage.id);
+      if (index != -1) {
+        _messages[index] = Message(
+          id: failedMessage.id,
+          chatId: failedMessage.chatId,
+          senderId: failedMessage.senderId,
+          content: failedMessage.content,
+          type: failedMessage.type,
+          timestamp: failedMessage.timestamp,
+          status: MessageStatus.sending,
+        );
+      }
+    });
+
+    final result = await widget.messageRepository!.sendMessage(
+      chatId: widget.recipientId,
+      content: failedMessage.content,
+    );
+
+    if (!mounted) return;
+
+    result.fold(
+      onSuccess: (message) {
+        setState(() {
+          final index = _messages.indexWhere((m) => m.id == failedMessage.id);
+          if (index != -1) {
+            _messages[index] = message;
+          }
+        });
+      },
+      onFailure: (error) {
+        setState(() {
+          final index = _messages.indexWhere((m) => m.id == failedMessage.id);
+          if (index != -1) {
+            _messages[index] = Message(
+              id: failedMessage.id,
+              chatId: failedMessage.chatId,
+              senderId: failedMessage.senderId,
+              content: failedMessage.content,
+              type: failedMessage.type,
+              timestamp: failedMessage.timestamp,
+              status: MessageStatus.failed,
+            );
+          }
+        });
+        _showError('Не удалось отправить: ${error.message}');
       },
     );
   }
@@ -385,8 +534,9 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 class _MessageBubble extends StatelessWidget {
   final Message message;
   final bool isMe;
+  final VoidCallback? onRetry;
 
-  const _MessageBubble({required this.message, required this.isMe});
+  const _MessageBubble({required this.message, required this.isMe, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -499,8 +649,7 @@ class _MessageBubble extends StatelessWidget {
 
     switch (message.status) {
       case MessageStatus.sending:
-        icon = CupertinoIcons.clock;
-        break;
+        return const CupertinoActivityIndicator(radius: 6);
       case MessageStatus.sent:
         icon = CupertinoIcons.checkmark;
         break;
@@ -512,9 +661,17 @@ class _MessageBubble extends StatelessWidget {
         color = CupertinoColors.white;
         break;
       case MessageStatus.failed:
-        icon = CupertinoIcons.exclamationmark_circle;
-        color = CupertinoColors.systemRed;
-        break;
+        return GestureDetector(
+          onTap: onRetry,
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(CupertinoIcons.exclamationmark_circle, size: 14, color: CupertinoColors.systemRed),
+              SizedBox(width: 4),
+              Text('Повторить', style: TextStyle(fontSize: 10, color: CupertinoColors.systemRed)),
+            ],
+          ),
+        );
     }
 
     return Icon(icon, size: 14, color: color);

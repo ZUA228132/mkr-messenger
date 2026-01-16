@@ -1,6 +1,6 @@
 import 'dart:developer' as developer;
 
-import '../../core/errors/failures.dart';
+import '../../core/error/api_error.dart';
 import '../../core/result/result.dart';
 import '../../domain/entities/chat.dart';
 import '../datasources/api_client.dart';
@@ -44,7 +44,7 @@ class RemoteChatRepository {
             'Failed to parse chats response: $e',
             name: 'RemoteChatRepository',
           );
-          return Error(ServerFailure('Failed to parse chats: $e'));
+          return Failure(ApiError(message: 'Failed to parse chats: $e'));
         }
       },
       onFailure: (apiError) {
@@ -52,11 +52,10 @@ class RemoteChatRepository {
           'Failed to fetch chats: ${apiError.message}',
           name: 'RemoteChatRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }
-
 
   /// Create a new chat
   /// Requirements: 4.4 - POST /api/chats with participantIds
@@ -100,7 +99,7 @@ class RemoteChatRepository {
             'Failed to parse create chat response: $e',
             name: 'RemoteChatRepository',
           );
-          return Error(ServerFailure('Failed to parse chat: $e'));
+          return Failure(ApiError(message: 'Failed to parse chat: $e'));
         }
       },
       onFailure: (apiError) {
@@ -108,7 +107,7 @@ class RemoteChatRepository {
           'Failed to create chat: ${apiError.message}',
           name: 'RemoteChatRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }
@@ -136,7 +135,7 @@ class RemoteChatRepository {
           'Failed to delete chat: ${apiError.message}',
           name: 'RemoteChatRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }
@@ -170,7 +169,7 @@ class RemoteChatRepository {
             'Failed to parse chat response: $e',
             name: 'RemoteChatRepository',
           );
-          return Error(ServerFailure('Failed to parse chat: $e'));
+          return Failure(ApiError(message: 'Failed to parse chat: $e'));
         }
       },
       onFailure: (apiError) {
@@ -178,7 +177,7 @@ class RemoteChatRepository {
           'Failed to fetch chat: ${apiError.message}',
           name: 'RemoteChatRepository',
         );
-        return Error(apiError.toFailure());
+        return Failure(apiError);
       },
     );
   }
