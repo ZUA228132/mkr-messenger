@@ -62,7 +62,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
     final callsignResult = CallsignValidator.validate(callsign);
     if (!callsignResult.isValid) {
-      setState(() => _errorMessage = callsignResult.error);
+      setState(() => _errorMessage = callsignResult.errorMessage);
       return;
     }
 
