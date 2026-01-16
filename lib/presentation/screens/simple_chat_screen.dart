@@ -37,11 +37,15 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
   bool _isLoadingMore = false;
   bool _hasMore = true;
   bool _isSending = false;
+  bool _isRecording = false;
+  bool _isRecordingVideo = false;
+  int _recordingDuration = 0;
   String? _errorMessage;
   StreamSubscription<Message>? _messageSubscription;
   StreamSubscription<WsConnectionState>? _connectionSubscription;
   WsConnectionState _connectionState = WsConnectionState.disconnected;
   Timer? _typingTimer;
+  Timer? _recordingTimer;
 
   @override
   void initState() {
@@ -59,6 +63,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     _messageSubscription?.cancel();
     _connectionSubscription?.cancel();
     _typingTimer?.cancel();
+    _recordingTimer?.cancel();
     super.dispose();
   }
 
@@ -244,6 +249,163 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     
     // Debounce typing events
     _typingTimer = Timer(const Duration(seconds: 3), () {});
+  }
+
+  /// Start voice recording
+  void _startVoiceRecording() {
+    setState(() {
+      _isRecording = true;
+      _isRecordingVideo = false;
+      _recordingDuration = 0;
+    });
+    
+    _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() => _recordingDuration++);
+      }
+    });
+  }
+
+  /// Start video note recording
+  void _startVideoRecording() {
+    setState(() {
+      _isRecording = true;
+      _isRecordingVideo = true;
+      _recordingDuration = 0;
+    });
+    
+    _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() => _recordingDuration++);
+        // Max 60 seconds for video notes
+        if (_recordingDuration >= 60) {
+          _stopRecording();
+        }
+      }
+    });
+  }
+
+  /// Stop recording and send
+  void _stopRecording() {
+    _recordingTimer?.cancel();
+    
+    if (_recordingDuration < 1) {
+      _cancelRecording();
+      return;
+    }
+
+    final type = _isRecordingVideo ? MessageType.videoNote : MessageType.voiceNote;
+    final duration = _recordingDuration;
+    
+    setState(() {
+      _isRecording = false;
+      _isRecordingVideo = false;
+      _recordingDuration = 0;
+    });
+
+    // Add optimistic message
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    final optimisticMessage = Message(
+      id: tempId,
+      chatId: widget.recipientId,
+      senderId: widget.currentUserId,
+      content: _isRecordingVideo ? 'Видео-кружок' : 'Голосовое сообщение',
+      type: type,
+      timestamp: DateTime.now(),
+      status: MessageStatus.sending,
+      duration: duration,
+    );
+
+    setState(() {
+      _messages.insert(0, optimisticMessage);
+    });
+
+    // TODO: Upload media file and send message
+    // For now, simulate success after delay
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          final index = _messages.indexWhere((m) => m.id == tempId);
+          if (index != -1) {
+            _messages[index] = optimisticMessage.copyWith(status: MessageStatus.sent);
+          }
+        });
+      }
+    });
+  }
+
+  /// Cancel recording
+  void _cancelRecording() {
+    _recordingTimer?.cancel();
+    setState(() {
+      _isRecording = false;
+      _isRecordingVideo = false;
+      _recordingDuration = 0;
+    });
+  }
+
+  String _formatDuration(int seconds) {
+    final mins = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+
+  /// Show attachment options
+  void _showAttachmentOptions() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              // TODO: Pick photo from gallery
+            },
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.photo, color: CupertinoColors.systemBlue),
+                SizedBox(width: 8),
+                Text('Фото'),
+              ],
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              // TODO: Pick video from gallery
+            },
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.videocam, color: CupertinoColors.systemGreen),
+                SizedBox(width: 8),
+                Text('Видео'),
+              ],
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              // TODO: Pick file
+            },
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.doc, color: CupertinoColors.systemOrange),
+                SizedBox(width: 8),
+                Text('Файл'),
+              ],
+            ),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDestructiveAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Отмена'),
+        ),
+      ),
+    );
   }
 
   void _showError(String message) {
@@ -481,27 +643,104 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
   }
 
   Widget _buildInputBar() {
+    // Recording mode UI
+    if (_isRecording) {
+      return Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: _isRecordingVideo 
+              ? CupertinoColors.systemPurple.withAlpha(25)
+              : CupertinoColors.systemRed.withAlpha(25),
+          border: const Border(
+            top: BorderSide(color: CupertinoColors.separator, width: 0.5),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Cancel button
+            CupertinoButton(
+              padding: const EdgeInsets.all(8),
+              onPressed: _cancelRecording,
+              child: const Icon(CupertinoIcons.xmark_circle_fill, 
+                color: CupertinoColors.systemGrey, size: 28),
+            ),
+            // Recording indicator
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: _isRecordingVideo 
+                          ? CupertinoColors.systemPurple 
+                          : CupertinoColors.systemRed,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _formatDuration(_recordingDuration),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: _isRecordingVideo 
+                          ? CupertinoColors.systemPurple 
+                          : CupertinoColors.systemRed,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _isRecordingVideo ? 'Кружок' : 'Голосовое',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: CupertinoColors.systemGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Send button
+            CupertinoButton(
+              padding: const EdgeInsets.all(8),
+              onPressed: _stopRecording,
+              child: Icon(
+                CupertinoIcons.arrow_up_circle_fill,
+                size: 32,
+                color: _isRecordingVideo 
+                    ? CupertinoColors.systemPurple 
+                    : CupertinoColors.systemRed,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Normal input mode
+    final hasText = _messageController.text.trim().isNotEmpty;
+    
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: const BoxDecoration(
         border: Border(
-          top: BorderSide(
-            color: CupertinoColors.separator,
-            width: 0.5,
-          ),
+          top: BorderSide(color: CupertinoColors.separator, width: 0.5),
         ),
       ),
       child: Row(
         children: [
+          // Attachment button
           CupertinoButton(
             padding: const EdgeInsets.all(8),
-            onPressed: () {},
+            onPressed: _showAttachmentOptions,
             child: const Icon(CupertinoIcons.paperclip),
           ),
+          // Text input
           Expanded(
             child: CupertinoTextField(
               controller: _messageController,
-              placeholder: 'Message',
+              placeholder: 'Сообщение',
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: CupertinoColors.systemGrey6,
@@ -510,21 +749,79 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
               maxLines: 4,
               minLines: 1,
               textInputAction: TextInputAction.send,
-              onChanged: (_) => _onTyping(),
+              onChanged: (_) {
+                _onTyping();
+                setState(() {}); // Update UI for send button
+              },
               onSubmitted: (_) => _sendMessage(),
             ),
           ),
-          CupertinoButton(
-            padding: const EdgeInsets.all(8),
-            onPressed: _isSending ? null : _sendMessage,
-            child: _isSending
-                ? const CupertinoActivityIndicator()
-                : const Icon(
-                    CupertinoIcons.arrow_up_circle_fill,
-                    size: 32,
-                    color: CupertinoColors.systemBlue,
+          // Voice/Video/Send buttons
+          if (hasText) ...[
+            // Send text button
+            CupertinoButton(
+              padding: const EdgeInsets.all(8),
+              onPressed: _isSending ? null : _sendMessage,
+              child: _isSending
+                  ? const CupertinoActivityIndicator()
+                  : const Icon(
+                      CupertinoIcons.arrow_up_circle_fill,
+                      size: 32,
+                      color: CupertinoColors.systemBlue,
+                    ),
+            ),
+          ] else ...[
+            // Video note button (кружок)
+            CupertinoButton(
+              padding: const EdgeInsets.all(6),
+              onPressed: _startVideoRecording,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: CupertinoColors.systemPurple,
+                    width: 2,
                   ),
-          ),
+                ),
+                child: const Icon(
+                  CupertinoIcons.videocam_fill,
+                  size: 14,
+                  color: CupertinoColors.systemPurple,
+                ),
+              ),
+            ),
+            // Voice note button
+            GestureDetector(
+              onLongPressStart: (_) => _startVoiceRecording(),
+              onLongPressEnd: (_) => _stopRecording(),
+              child: CupertinoButton(
+                padding: const EdgeInsets.all(8),
+                onPressed: () {
+                  // Short tap shows hint
+                  showCupertinoDialog(
+                    context: context,
+                    builder: (ctx) => CupertinoAlertDialog(
+                      title: const Text('Голосовое сообщение'),
+                      content: const Text('Удерживайте кнопку для записи'),
+                      actions: [
+                        CupertinoDialogAction(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                child: const Icon(
+                  CupertinoIcons.mic_fill,
+                  size: 24,
+                  color: CupertinoColors.systemRed,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -605,42 +902,167 @@ class _MessageBubble extends StatelessWidget {
           ),
         );
       case MessageType.image:
-        return const Row(
+        return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(CupertinoIcons.photo, size: 20),
-            SizedBox(width: 8),
-            Text('Photo'),
+            Icon(CupertinoIcons.photo, size: 20, 
+              color: isMe ? CupertinoColors.white : CupertinoColors.black),
+            const SizedBox(width: 8),
+            Text('Фото', style: TextStyle(
+              color: isMe ? CupertinoColors.white : CupertinoColors.black)),
           ],
         );
       case MessageType.video:
-        return const Row(
+        return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(CupertinoIcons.videocam, size: 20),
-            SizedBox(width: 8),
-            Text('Video'),
+            Icon(CupertinoIcons.videocam, size: 20,
+              color: isMe ? CupertinoColors.white : CupertinoColors.black),
+            const SizedBox(width: 8),
+            Text('Видео', style: TextStyle(
+              color: isMe ? CupertinoColors.white : CupertinoColors.black)),
           ],
         );
       case MessageType.audio:
-        return const Row(
+        return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(CupertinoIcons.waveform, size: 20),
-            SizedBox(width: 8),
-            Text('Audio'),
+            Icon(CupertinoIcons.waveform, size: 20,
+              color: isMe ? CupertinoColors.white : CupertinoColors.black),
+            const SizedBox(width: 8),
+            Text('Аудио', style: TextStyle(
+              color: isMe ? CupertinoColors.white : CupertinoColors.black)),
           ],
         );
       case MessageType.file:
-        return const Row(
+        return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(CupertinoIcons.doc, size: 20),
-            SizedBox(width: 8),
-            Text('File'),
+            Icon(CupertinoIcons.doc, size: 20,
+              color: isMe ? CupertinoColors.white : CupertinoColors.black),
+            const SizedBox(width: 8),
+            Text('Файл', style: TextStyle(
+              color: isMe ? CupertinoColors.white : CupertinoColors.black)),
           ],
         );
+      case MessageType.voiceNote:
+        return _buildVoiceNote();
+      case MessageType.videoNote:
+        return _buildVideoNote();
     }
+  }
+
+  Widget _buildVoiceNote() {
+    final duration = message.duration ?? 0;
+    final mins = duration ~/ 60;
+    final secs = duration % 60;
+    final durationText = '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+    
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: isMe 
+                ? CupertinoColors.white.withAlpha(51)
+                : CupertinoColors.systemRed.withAlpha(51),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            CupertinoIcons.play_fill,
+            size: 18,
+            color: isMe ? CupertinoColors.white : CupertinoColors.systemRed,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Waveform placeholder
+            Row(
+              children: List.generate(12, (i) => Container(
+                width: 3,
+                height: 8 + (i % 3) * 4.0,
+                margin: const EdgeInsets.symmetric(horizontal: 1),
+                decoration: BoxDecoration(
+                  color: isMe 
+                      ? CupertinoColors.white.withAlpha(179)
+                      : CupertinoColors.systemGrey,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              )),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              durationText,
+              style: TextStyle(
+                fontSize: 12,
+                color: isMe 
+                    ? CupertinoColors.white.withAlpha(179)
+                    : CupertinoColors.systemGrey,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVideoNote() {
+    final duration = message.duration ?? 0;
+    final mins = duration ~/ 60;
+    final secs = duration % 60;
+    final durationText = '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+    
+    return Column(
+      children: [
+        // Circle video placeholder
+        Container(
+          width: 200,
+          height: 200,
+          decoration: BoxDecoration(
+            color: isMe 
+                ? CupertinoColors.white.withAlpha(51)
+                : CupertinoColors.systemPurple.withAlpha(51),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: CupertinoColors.systemPurple,
+              width: 3,
+            ),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                CupertinoIcons.play_circle_fill,
+                size: 48,
+                color: isMe ? CupertinoColors.white : CupertinoColors.systemPurple,
+              ),
+              Positioned(
+                bottom: 16,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.black.withAlpha(128),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    durationText,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: CupertinoColors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildStatusIcon() {

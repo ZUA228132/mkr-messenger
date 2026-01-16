@@ -144,6 +144,8 @@ class _ChatTile extends StatelessWidget {
       case MessageType.video: return '🎥 Видео';
       case MessageType.audio: return '🎵 Аудио';
       case MessageType.file: return '📎 Файл';
+      case MessageType.voiceNote: return '🎤 Голосовое';
+      case MessageType.videoNote: return '⭕ Кружок';
     }
   }
 

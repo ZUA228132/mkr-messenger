@@ -74,6 +74,14 @@ class MessageResponse {
         return MessageType.audio;
       case 'FILE':
         return MessageType.file;
+      case 'VOICE_NOTE':
+      case 'VOICENOTE':
+      case 'VOICE':
+        return MessageType.voiceNote;
+      case 'VIDEO_NOTE':
+      case 'VIDEONOTE':
+      case 'CIRCLE':
+        return MessageType.videoNote;
       default:
         return MessageType.text;
     }

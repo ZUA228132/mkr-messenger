@@ -384,6 +384,28 @@ class _MessageBubble extends StatelessWidget {
             Text('File'),
           ],
         );
+      case MessageType.voiceNote:
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(CupertinoIcons.mic_fill, size: 20, 
+              color: isMe ? CupertinoColors.white : CupertinoColors.systemRed),
+            const SizedBox(width: 8),
+            Text('Голосовое', style: TextStyle(
+              color: isMe ? CupertinoColors.white : CupertinoColors.black)),
+          ],
+        );
+      case MessageType.videoNote:
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(CupertinoIcons.circle, size: 20,
+              color: isMe ? CupertinoColors.white : CupertinoColors.systemPurple),
+            const SizedBox(width: 8),
+            Text('Кружок', style: TextStyle(
+              color: isMe ? CupertinoColors.white : CupertinoColors.black)),
+          ],
+        );
     }
   }
 

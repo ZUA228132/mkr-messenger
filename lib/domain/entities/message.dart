@@ -1,5 +1,13 @@
 /// Message types
-enum MessageType { text, image, video, audio, file }
+enum MessageType { 
+  text, 
+  image, 
+  video, 
+  audio, 
+  file,
+  voiceNote,   // Голосовое сообщение
+  videoNote,   // Видео-кружок
+}
 
 /// Message delivery status
 enum MessageStatus { sending, sent, delivered, read, failed }
@@ -24,6 +32,8 @@ class Message {
   final DateTime timestamp;
   final MessageStatus status;
   final AutoDeletePolicy? autoDelete;
+  final int? duration; // Duration in seconds for voice/video notes
+  final String? mediaUrl; // URL for media files
 
   const Message({
     required this.id,
@@ -34,6 +44,8 @@ class Message {
     required this.timestamp,
     this.status = MessageStatus.sending,
     this.autoDelete,
+    this.duration,
+    this.mediaUrl,
   });
 
   Message copyWith({
@@ -45,6 +57,8 @@ class Message {
     DateTime? timestamp,
     MessageStatus? status,
     AutoDeletePolicy? autoDelete,
+    int? duration,
+    String? mediaUrl,
   }) {
     return Message(
       id: id ?? this.id,
@@ -55,6 +69,8 @@ class Message {
       timestamp: timestamp ?? this.timestamp,
       status: status ?? this.status,
       autoDelete: autoDelete ?? this.autoDelete,
+      duration: duration ?? this.duration,
+      mediaUrl: mediaUrl ?? this.mediaUrl,
     );
   }
 }
