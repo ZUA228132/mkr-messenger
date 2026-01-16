@@ -32,6 +32,15 @@ dependencies:
   pointycastle: ^3.7.4
   cryptography: ^2.7.0
 
+  # Media Recording
+  record: ^5.1.0
+  camera: ^0.11.0+2
+  path_provider: ^2.1.2
+  
+  # Image/File Picker
+  image_picker: ^1.0.7
+  file_picker: ^8.0.0+1
+
   # Push Notifications (APNs for iOS)
   # Requirements: 8.4 - Use APNs for push notifications
   # TODO: Re-enable after fixing iOS modular headers issue

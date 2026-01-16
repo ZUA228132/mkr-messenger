@@ -64,7 +64,9 @@ class UserResponse {
       callsign: username,
       displayName: displayName.isNotEmpty ? displayName : null,
       avatarUrl: avatarUrl,
+      bio: bio,
       isVerified: isVerified,
+      isOnline: isOnline,
       createdAt: DateTime.fromMillisecondsSinceEpoch(createdAt),
     );
   }

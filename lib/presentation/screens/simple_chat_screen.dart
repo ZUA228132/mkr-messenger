@@ -433,24 +433,27 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           onPressed: widget.onBack ?? () => Navigator.pop(context),
           child: const Icon(CupertinoIcons.back),
         ),
-        middle: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('@${widget.recipientId}'),
-            Text(
-              _getConnectionStatus(),
-              style: TextStyle(
-                fontSize: 11,
-                color: _connectionState == WsConnectionState.connected
-                    ? CupertinoColors.systemGreen
-                    : CupertinoColors.systemGrey,
+        middle: GestureDetector(
+          onTap: () => _showUserProfile(context),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('@${widget.recipientId}'),
+              Text(
+                _getConnectionStatus(),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: _connectionState == WsConnectionState.connected
+                      ? CupertinoColors.systemGreen
+                      : CupertinoColors.systemGrey,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
-          onPressed: () {},
+          onPressed: () => _showUserProfile(context),
           child: const Icon(CupertinoIcons.info),
         ),
       ),
@@ -459,6 +462,39 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           children: [
             Expanded(child: _buildMessageList()),
             _buildInputBar(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showUserProfile(BuildContext context) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (ctx) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: BoxDecoration(
+          color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            // Handle
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              width: 36,
+              height: 5,
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemGrey3,
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            Expanded(
+              child: _UserProfileContent(
+                userId: widget.recipientId,
+                onClose: () => Navigator.pop(ctx),
+              ),
+            ),
           ],
         ),
       ),
@@ -1067,7 +1103,7 @@ class _MessageBubble extends StatelessWidget {
 
   Widget _buildStatusIcon() {
     IconData icon;
-    Color color = CupertinoColors.white.withOpacity(0.7);
+    Color color = CupertinoColors.white.withAlpha(179);
 
     switch (message.status) {
       case MessageStatus.sending:
@@ -1101,5 +1137,193 @@ class _MessageBubble extends StatelessWidget {
 
   String _formatTime(DateTime time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+
+/// Inline user profile content for modal
+class _UserProfileContent extends StatelessWidget {
+  final String userId;
+  final VoidCallback onClose;
+
+  const _UserProfileContent({
+    required this.userId,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final firstLetter = userId.isNotEmpty ? userId[0].toUpperCase() : '?';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          // Close button
+          Align(
+            alignment: Alignment.topRight,
+            child: CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: onClose,
+              child: const Text('Готово'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Avatar
+          Container(
+            width: 100,
+            height: 100,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [CupertinoColors.systemBlue, CupertinoColors.systemIndigo],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                firstLetter,
+                style: const TextStyle(
+                  fontSize: 42,
+                  fontWeight: FontWeight.w600,
+                  color: CupertinoColors.white,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Name
+          Text(
+            '@$userId',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Online status
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: CupertinoColors.systemGreen,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'В сети',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          // Action buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildActionButton(
+                context,
+                icon: CupertinoIcons.phone_fill,
+                label: 'Звонок',
+              ),
+              _buildActionButton(
+                context,
+                icon: CupertinoIcons.video_camera_solid,
+                label: 'Видео',
+              ),
+              _buildActionButton(
+                context,
+                icon: CupertinoIcons.bell_slash_fill,
+                label: 'Без звука',
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          // Encryption info
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemGreen.withAlpha(25),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  CupertinoIcons.lock_shield_fill,
+                  color: CupertinoColors.systemGreen,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Сообщения защищены сквозным шифрованием',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: CupertinoColors.label.resolveFrom(context),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(BuildContext context, {
+    required IconData icon,
+    required String label,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        showCupertinoDialog(
+          context: context,
+          builder: (ctx) => CupertinoAlertDialog(
+            title: const Text('Скоро'),
+            content: const Text('Эта функция будет добавлена позже'),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      },
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemBlue.withAlpha(25),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: CupertinoColors.systemBlue,
+              size: 24,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: CupertinoColors.systemBlue,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
