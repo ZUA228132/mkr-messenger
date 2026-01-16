@@ -168,8 +168,40 @@ class _AuthScreenState extends State<AuthScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 60),
-                // Logo
-                Text('MKR', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w700, color: isDark ? CupertinoColors.white : CupertinoColors.black, letterSpacing: 8)),
+                // Logo - красивый градиентный блок
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF6366F1).withAlpha(80),
+                        blurRadius: 30,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'M',
+                      style: TextStyle(
+                        fontSize: 52,
+                        fontWeight: FontWeight.w800,
+                        color: CupertinoColors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text('MKR', style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: isDark ? CupertinoColors.white : CupertinoColors.black, letterSpacing: 6)),
+                const SizedBox(height: 4),
+                Text('Secure Messenger', style: TextStyle(fontSize: 14, color: CupertinoColors.systemGrey, fontWeight: FontWeight.w500, letterSpacing: 2)),
                 const SizedBox(height: 8),
                 Text(_authMode == AuthMode.login ? 'Вход' : 'Регистрация', style: TextStyle(fontSize: 17, color: CupertinoColors.systemGrey, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 48),
@@ -235,7 +267,26 @@ class _AuthScreenState extends State<AuthScreen> {
                 ],
                 
                 const SizedBox(height: 48),
-                Text('MKR by Makarov', style: TextStyle(color: CupertinoColors.systemGrey, fontSize: 13)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                        ),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: const Center(
+                        child: Text('M', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: CupertinoColors.white)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('MKR by Makarov', style: TextStyle(color: CupertinoColors.systemGrey, fontSize: 13)),
+                  ],
+                ),
                 const SizedBox(height: 24),
               ],
             ),

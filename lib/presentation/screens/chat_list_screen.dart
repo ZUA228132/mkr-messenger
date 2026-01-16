@@ -5,7 +5,7 @@ import '../../domain/entities/chat.dart';
 import '../../domain/entities/message.dart';
 import '../../domain/entities/user.dart';
 
-/// Экран списка чатов — чистый Apple стиль
+/// Экран списка чатов — чистый Apple стиль с Large Title
 class ChatListScreen extends StatefulWidget {
   final List<Chat> chats;
   final String currentUserId;
@@ -52,7 +52,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
   Future<void> _loadUsers() async {
     if (widget.userRepository == null) return;
     
-    // Collect all participant IDs that we don't have cached
     final userIds = <String>{};
     for (final chat in widget.chats) {
       if (chat.type == ChatType.direct) {
@@ -64,7 +63,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
       }
     }
     
-    // Load users
     for (final userId in userIds) {
       final result = await widget.userRepository!.getUser(userId);
       if (!mounted) return;
@@ -87,79 +85,241 @@ class _ChatListScreenState extends State<ChatListScreen> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        middle: const Text('Чаты'),
-        trailing: CupertinoButton(
-          padding: EdgeInsets.zero,
-          onPressed: widget.onNewChat,
-          child: const Icon(CupertinoIcons.square_pencil),
-        ),
+      child: CustomScrollView(
+        slivers: [
+          // Красивый Large Title Navigation Bar
+          CupertinoSliverNavigationBar(
+            largeTitle: Row(
+              children: [
+                // MKR Logo
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'M',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: CupertinoColors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text('Чаты'),
+              ],
+            ),
+            trailing: CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: widget.onNewChat,
+              child: const Icon(CupertinoIcons.square_pencil, size: 24),
+            ),
+            border: null,
+          ),
+          // Красивый блок под монобровь - статус безопасности
+          SliverToBoxAdapter(
+            child: _buildSecurityBanner(context),
+          ),
+          // Pull to refresh
+          CupertinoSliverRefreshControl(onRefresh: widget.onRefresh),
+          // Контент
+          _buildSliverContent(),
+        ],
       ),
-      child: SafeArea(child: _buildContent()),
     );
   }
 
-  Widget _buildContent() {
+  /// Красивый баннер безопасности под монобровь
+  Widget _buildSecurityBanner(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF6366F1).withAlpha(30),
+            const Color(0xFF8B5CF6).withAlpha(20),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF6366F1).withAlpha(50),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              CupertinoIcons.lock_shield_fill,
+              color: CupertinoColors.white,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'MKR Messenger',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: CupertinoColors.label.resolveFrom(context),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: CupertinoColors.systemGreen,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Защищённое соединение',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemGreen.withAlpha(30),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  CupertinoIcons.checkmark_shield_fill,
+                  color: CupertinoColors.systemGreen,
+                  size: 14,
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'E2E',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: CupertinoColors.systemGreen,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSliverContent() {
     if (widget.isLoading && widget.chats.isEmpty) {
-      return const Center(child: CupertinoActivityIndicator());
+      return const SliverFillRemaining(
+        child: Center(child: CupertinoActivityIndicator()),
+      );
     }
 
     if (widget.errorMessage != null && widget.chats.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(CupertinoIcons.exclamationmark_triangle, size: 48, color: CupertinoColors.systemRed),
-              const SizedBox(height: 16),
-              const Text('Не удалось загрузить', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Text(widget.errorMessage!, style: const TextStyle(color: CupertinoColors.systemGrey), textAlign: TextAlign.center),
-              const SizedBox(height: 24),
-              CupertinoButton.filled(onPressed: widget.onRefresh, child: const Text('Повторить')),
-            ],
+      return SliverFillRemaining(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(CupertinoIcons.exclamationmark_triangle, size: 48, color: CupertinoColors.systemRed),
+                const SizedBox(height: 16),
+                const Text('Не удалось загрузить', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Text(widget.errorMessage!, style: const TextStyle(color: CupertinoColors.systemGrey), textAlign: TextAlign.center),
+                const SizedBox(height: 24),
+                CupertinoButton.filled(onPressed: widget.onRefresh, child: const Text('Повторить')),
+              ],
+            ),
           ),
         ),
       );
     }
 
     if (widget.chats.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(CupertinoIcons.chat_bubble_2, size: 48, color: CupertinoColors.systemGrey),
-            const SizedBox(height: 16),
-            const Text('Нет чатов', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            const Text('Начните новый разговор', style: TextStyle(color: CupertinoColors.systemGrey)),
-            const SizedBox(height: 24),
-            CupertinoButton.filled(onPressed: widget.onNewChat, child: const Text('Новый чат')),
-          ],
+      return SliverFillRemaining(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF6366F1).withAlpha(30),
+                      const Color(0xFF8B5CF6).withAlpha(20),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(CupertinoIcons.chat_bubble_2, size: 40, color: Color(0xFF6366F1)),
+              ),
+              const SizedBox(height: 16),
+              const Text('Нет чатов', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              const Text('Начните новый разговор', style: TextStyle(color: CupertinoColors.systemGrey)),
+              const SizedBox(height: 24),
+              CupertinoButton.filled(onPressed: widget.onNewChat, child: const Text('Новый чат')),
+            ],
+          ),
         ),
       );
     }
 
-    return CustomScrollView(
-      slivers: [
-        CupertinoSliverRefreshControl(onRefresh: widget.onRefresh),
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final chat = widget.chats[index];
-              final recipientUser = _getRecipientUser(chat);
-              return _ChatTile(
-                chat: chat,
-                currentUserId: widget.currentUserId,
-                recipientUser: recipientUser,
-                onTap: () => widget.onChatTap?.call(chat),
-              );
-            },
-            childCount: widget.chats.length,
-          ),
-        ),
-      ],
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final chat = widget.chats[index];
+          final recipientUser = _getRecipientUser(chat);
+          return _ChatTile(
+            chat: chat,
+            currentUserId: widget.currentUserId,
+            recipientUser: recipientUser,
+            onTap: () => widget.onChatTap?.call(chat),
+          );
+        },
+        childCount: widget.chats.length,
+      ),
     );
   }
 }
