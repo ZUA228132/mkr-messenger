@@ -4,7 +4,9 @@ import 'package:flutter/cupertino.dart';
 
 import '../../data/datasources/websocket_service.dart';
 import '../../data/repositories/remote_message_repository.dart';
+import '../../data/repositories/remote_user_repository.dart';
 import '../../domain/entities/message.dart';
+import '../../domain/entities/user.dart';
 
 /// Simple chat screen for direct messaging with backend integration
 /// Requirements: 5.1-5.4 - Message retrieval, display, sending, real-time updates
@@ -13,6 +15,7 @@ class SimpleChatScreen extends StatefulWidget {
   final String recipientId;
   final String currentUserId;
   final RemoteMessageRepository? messageRepository;
+  final RemoteUserRepository? userRepository;
   final WebSocketService? webSocketService;
   final VoidCallback? onBack;
 
@@ -21,6 +24,7 @@ class SimpleChatScreen extends StatefulWidget {
     required this.recipientId,
     required this.currentUserId,
     this.messageRepository,
+    this.userRepository,
     this.webSocketService,
     this.onBack,
   });
@@ -33,6 +37,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   List<Message> _messages = [];
+  User? _recipientUser;
   bool _isLoading = false;
   bool _isLoadingMore = false;
   bool _hasMore = true;
@@ -51,6 +56,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
   void initState() {
     super.initState();
     _loadMessages();
+    _loadRecipientUser();
     _subscribeToMessages();
     _subscribeToConnectionState();
     _scrollController.addListener(_onScroll);
@@ -65,6 +71,19 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     _typingTimer?.cancel();
     _recordingTimer?.cancel();
     super.dispose();
+  }
+
+  /// Load recipient user info
+  Future<void> _loadRecipientUser() async {
+    if (widget.userRepository == null) return;
+    
+    final result = await widget.userRepository!.getUser(widget.recipientId);
+    if (!mounted) return;
+    
+    result.fold(
+      onSuccess: (user) => setState(() => _recipientUser = user),
+      onFailure: (_) {}, // Silently fail, will show recipientId as fallback
+    );
   }
 
   /// Load more messages when scrolling to top
@@ -426,6 +445,9 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final displayName = _recipientUser?.displayName ?? _recipientUser?.callsign ?? widget.recipientId;
+    final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+    
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         leading: CupertinoButton(
@@ -435,26 +457,68 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         ),
         middle: GestureDetector(
           onTap: () => _showUserProfile(context),
-          child: Column(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('@${widget.recipientId}'),
-              Text(
-                _getConnectionStatus(),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: _connectionState == WsConnectionState.connected
-                      ? CupertinoColors.systemGreen
-                      : CupertinoColors.systemGrey,
+              // Mini avatar
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [CupertinoColors.systemBlue, CupertinoColors.systemIndigo],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
                 ),
+                child: Center(
+                  child: Text(
+                    firstLetter,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: CupertinoColors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    _getStatusText(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.normal,
+                      color: _getStatusColor(),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
-        trailing: CupertinoButton(
-          padding: EdgeInsets.zero,
-          onPressed: () => _showUserProfile(context),
-          child: const Icon(CupertinoIcons.info),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => _showComingSoon(context, 'Звонки'),
+              child: const Icon(CupertinoIcons.phone),
+            ),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => _showComingSoon(context, 'Видеозвонки'),
+              child: const Icon(CupertinoIcons.video_camera),
+            ),
+          ],
         ),
       ),
       child: SafeArea(
@@ -466,6 +530,54 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         ),
       ),
     );
+  }
+
+  void _showComingSoon(BuildContext context, String feature) {
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Скоро'),
+        content: Text('$feature будут добавлены в следующем обновлении'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getStatusText() {
+    if (_recipientUser != null) {
+      if (_recipientUser!.isOnline) {
+        return 'В сети';
+      } else if (_recipientUser!.lastSeen != null) {
+        return _formatLastSeen(_recipientUser!.lastSeen!);
+      }
+    }
+    return _getConnectionStatus();
+  }
+
+  Color _getStatusColor() {
+    if (_recipientUser?.isOnline == true) {
+      return CupertinoColors.systemGreen;
+    }
+    if (_connectionState == WsConnectionState.connected) {
+      return CupertinoColors.systemGrey;
+    }
+    return CupertinoColors.systemOrange;
+  }
+
+  String _formatLastSeen(DateTime lastSeen) {
+    final now = DateTime.now();
+    final diff = now.difference(lastSeen);
+    
+    if (diff.inMinutes < 1) return 'был(а) только что';
+    if (diff.inMinutes < 60) return 'был(а) ${diff.inMinutes} мин. назад';
+    if (diff.inHours < 24) return 'был(а) ${diff.inHours} ч. назад';
+    if (diff.inDays == 1) return 'был(а) вчера';
+    return 'был(а) ${lastSeen.day}.${lastSeen.month}';
   }
 
   void _showUserProfile(BuildContext context) {
@@ -491,8 +603,17 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
             ),
             Expanded(
               child: _UserProfileContent(
-                userId: widget.recipientId,
+                user: _recipientUser,
+                recipientId: widget.recipientId,
                 onClose: () => Navigator.pop(ctx),
+                onCall: () {
+                  Navigator.pop(ctx);
+                  _showComingSoon(context, 'Звонки');
+                },
+                onVideoCall: () {
+                  Navigator.pop(ctx);
+                  _showComingSoon(context, 'Видеозвонки');
+                },
               ),
             ),
           ],
@@ -555,7 +676,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: CupertinoColors.systemBlue.withOpacity(0.1),
+                color: CupertinoColors.systemBlue.withAlpha(25),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -907,7 +1028,7 @@ class _MessageBubble extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           color: isMe
-                              ? CupertinoColors.white.withOpacity(0.7)
+                              ? CupertinoColors.white.withAlpha(179)
                               : CupertinoColors.systemGrey,
                         ),
                       ),
@@ -1143,17 +1264,25 @@ class _MessageBubble extends StatelessWidget {
 
 /// Inline user profile content for modal
 class _UserProfileContent extends StatelessWidget {
-  final String userId;
+  final User? user;
+  final String recipientId;
   final VoidCallback onClose;
+  final VoidCallback? onCall;
+  final VoidCallback? onVideoCall;
 
   const _UserProfileContent({
-    required this.userId,
+    required this.user,
+    required this.recipientId,
     required this.onClose,
+    this.onCall,
+    this.onVideoCall,
   });
 
   @override
   Widget build(BuildContext context) {
-    final firstLetter = userId.isNotEmpty ? userId[0].toUpperCase() : '?';
+    final displayName = user?.displayName ?? user?.callsign ?? recipientId;
+    final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+    final isOnline = user?.isOnline ?? false;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -1173,34 +1302,52 @@ class _UserProfileContent extends StatelessWidget {
           Container(
             width: 100,
             height: 100,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
                 colors: [CupertinoColors.systemBlue, CupertinoColors.systemIndigo],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               shape: BoxShape.circle,
+              image: user?.avatarUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(user!.avatarUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
-            child: Center(
-              child: Text(
-                firstLetter,
-                style: const TextStyle(
-                  fontSize: 42,
-                  fontWeight: FontWeight.w600,
-                  color: CupertinoColors.white,
-                ),
-              ),
-            ),
+            child: user?.avatarUrl == null
+                ? Center(
+                    child: Text(
+                      firstLetter,
+                      style: const TextStyle(
+                        fontSize: 42,
+                        fontWeight: FontWeight.w600,
+                        color: CupertinoColors.white,
+                      ),
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(height: 16),
           // Name
           Text(
-            '@$userId',
+            displayName,
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w600,
             ),
           ),
+          if (user?.callsign != null && user?.displayName != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              '@${user!.callsign}',
+              style: TextStyle(
+                fontSize: 16,
+                color: CupertinoColors.secondaryLabel.resolveFrom(context),
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           // Online status
           Row(
@@ -1209,14 +1356,14 @@ class _UserProfileContent extends StatelessWidget {
               Container(
                 width: 8,
                 height: 8,
-                decoration: const BoxDecoration(
-                  color: CupertinoColors.systemGreen,
+                decoration: BoxDecoration(
+                  color: isOnline ? CupertinoColors.systemGreen : CupertinoColors.systemGrey,
                   shape: BoxShape.circle,
                 ),
               ),
               const SizedBox(width: 6),
               Text(
-                'В сети',
+                isOnline ? 'В сети' : _formatLastSeen(user?.lastSeen),
                 style: TextStyle(
                   fontSize: 14,
                   color: CupertinoColors.secondaryLabel.resolveFrom(context),
@@ -1224,6 +1371,22 @@ class _UserProfileContent extends StatelessWidget {
               ),
             ],
           ),
+          // Bio
+          if (user?.bio != null && user!.bio!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemGrey6.resolveFrom(context),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                user!.bio!,
+                style: const TextStyle(fontSize: 15),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
           // Action buttons
           Row(
@@ -1233,16 +1396,19 @@ class _UserProfileContent extends StatelessWidget {
                 context,
                 icon: CupertinoIcons.phone_fill,
                 label: 'Звонок',
+                onTap: onCall,
               ),
               _buildActionButton(
                 context,
                 icon: CupertinoIcons.video_camera_solid,
                 label: 'Видео',
+                onTap: onVideoCall,
               ),
               _buildActionButton(
                 context,
                 icon: CupertinoIcons.bell_slash_fill,
                 label: 'Без звука',
+                onTap: () => _showComingSoon(context),
               ),
             ],
           ),
@@ -1274,6 +1440,65 @@ class _UserProfileContent extends StatelessWidget {
               ],
             ),
           ),
+          // Verified badge
+          if (user?.isVerified == true) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: CupertinoColors.systemBlue.withAlpha(25),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    CupertinoIcons.checkmark_seal_fill,
+                    color: CupertinoColors.systemBlue,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Верифицированный пользователь',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: CupertinoColors.label.resolveFrom(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatLastSeen(DateTime? lastSeen) {
+    if (lastSeen == null) return 'Не в сети';
+    
+    final now = DateTime.now();
+    final diff = now.difference(lastSeen);
+    
+    if (diff.inMinutes < 1) return 'был(а) только что';
+    if (diff.inMinutes < 60) return 'был(а) ${diff.inMinutes} мин. назад';
+    if (diff.inHours < 24) return 'был(а) ${diff.inHours} ч. назад';
+    if (diff.inDays == 1) return 'был(а) вчера';
+    return 'был(а) ${lastSeen.day}.${lastSeen.month}';
+  }
+
+  void _showComingSoon(BuildContext context) {
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Скоро'),
+        content: const Text('Эта функция будет добавлена позже'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
         ],
       ),
     );
@@ -1282,23 +1507,10 @@ class _UserProfileContent extends StatelessWidget {
   Widget _buildActionButton(BuildContext context, {
     required IconData icon,
     required String label,
+    VoidCallback? onTap,
   }) {
     return GestureDetector(
-      onTap: () {
-        showCupertinoDialog(
-          context: context,
-          builder: (ctx) => CupertinoAlertDialog(
-            title: const Text('Скоро'),
-            content: const Text('Эта функция будет добавлена позже'),
-            actions: [
-              CupertinoDialogAction(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      },
+      onTap: onTap ?? () => _showComingSoon(context),
       child: Column(
         children: [
           Container(

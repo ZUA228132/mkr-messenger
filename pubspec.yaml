@@ -33,7 +33,7 @@ dependencies:
   cryptography: ^2.7.0
 
   # Media Recording
-  record: ^5.1.0
+  record: ^6.0.0
   camera: ^0.11.0+2
   path_provider: ^2.1.2
   

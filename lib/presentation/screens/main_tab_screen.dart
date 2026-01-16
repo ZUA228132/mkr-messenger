@@ -219,7 +219,7 @@ class _SecurityTab extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: CupertinoColors.systemGreen.withOpacity(0.1),
+        color: CupertinoColors.systemGreen.withAlpha(25),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

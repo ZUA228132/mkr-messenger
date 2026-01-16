@@ -35,8 +35,8 @@ class StatusBarBranding extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  (isDark ? CupertinoColors.black : CupertinoColors.white).withOpacity(0.95),
-                  (isDark ? CupertinoColors.black : CupertinoColors.white).withOpacity(0.0),
+                  (isDark ? CupertinoColors.black : CupertinoColors.white).withAlpha(242),
+                  (isDark ? CupertinoColors.black : CupertinoColors.white).withAlpha(0),
                 ],
               ),
             ),
@@ -50,8 +50,8 @@ class StatusBarBranding extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     letterSpacing: 3,
                     color: isDark 
-                        ? CupertinoColors.white.withOpacity(0.6)
-                        : CupertinoColors.black.withOpacity(0.6),
+                        ? CupertinoColors.white.withAlpha(153)
+                        : CupertinoColors.black.withAlpha(153),
                   ),
                 ),
               ),

@@ -114,7 +114,7 @@ class _ChatTile extends StatelessWidget {
       onTap: onTap,
       leading: Container(
         width: 50, height: 50,
-        decoration: BoxDecoration(color: CupertinoColors.activeBlue.withOpacity(0.2), shape: BoxShape.circle),
+        decoration: BoxDecoration(color: CupertinoColors.activeBlue.withAlpha(51), shape: BoxShape.circle),
         child: Center(child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: CupertinoColors.activeBlue))),
       ),
       title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),

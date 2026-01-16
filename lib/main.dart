@@ -161,6 +161,7 @@ class _MKRAppState extends State<MKRApp> {
             recipientId: chatId,
             currentUserId: _currentUserId ?? 'user',
             messageRepository: _messageRepository,
+            userRepository: _userRepository,
             webSocketService: _webSocketService,
             onBack: () => context.pop(),
           );
