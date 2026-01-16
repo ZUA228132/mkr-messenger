@@ -35,15 +35,6 @@ target 'Runner' do
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
-  
-  # Additional pods for MKR Messenger
-  # Note: Most dependencies are handled by Flutter plugins
-  
-  # Fix Firebase modular headers issue
-  pod 'FirebaseCore', :modular_headers => true
-  pod 'FirebaseCoreInternal', :modular_headers => true
-  pod 'GoogleUtilities', :modular_headers => true
-  pod 'FirebaseMessaging', :modular_headers => true
 end
 
 target 'RunnerTests' do
