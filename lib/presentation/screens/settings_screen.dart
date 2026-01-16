@@ -4,7 +4,7 @@ import '../../core/constants/app_constants.dart';
 import '../../data/repositories/remote_user_repository.dart';
 import '../../domain/entities/user.dart';
 
-/// Settings screen with profile editing
+/// Экран настроек с редактированием профиля
 /// Requirements: 7.1-7.3 - User profile view and edit
 /// Requirements: 8.1 - Use Cupertino widgets for native iOS look
 class SettingsScreen extends StatefulWidget {
@@ -32,7 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
       navigationBar: const CupertinoNavigationBar(
-        middle: Text('Settings'),
+        middle: Text('Настройки'),
       ),
       child: SafeArea(
         child: ListView(
@@ -51,7 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildProfileSection() {
-    final displayName = widget.user?.displayName ?? widget.user?.callsign ?? 'User';
+    final displayName = widget.user?.displayName ?? widget.user?.callsign ?? 'Пользователь';
     final callsign = widget.user?.callsign ?? 'user';
 
     return Container(
@@ -95,7 +95,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       SizedBox(width: 4),
                       Text(
-                        'Verified',
+                        'Подтверждён',
                         style: TextStyle(
                           color: CupertinoColors.systemBlue,
                           fontSize: 12,
@@ -153,8 +153,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-
-  /// Requirements: 7.2 - POST /api/users/me
   void _showEditProfileDialog(BuildContext context) {
     final displayNameController = TextEditingController(
       text: widget.user?.displayName ?? '',
@@ -163,14 +161,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('Edit Profile'),
+        title: const Text('Редактировать профиль'),
         content: Padding(
           padding: const EdgeInsets.only(top: 16),
           child: Column(
             children: [
               CupertinoTextField(
                 controller: displayNameController,
-                placeholder: 'Display Name',
+                placeholder: 'Отображаемое имя',
                 padding: const EdgeInsets.all(12),
               ),
             ],
@@ -180,7 +178,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Отмена'),
           ),
           CupertinoDialogAction(
             isDefaultAction: true,
@@ -188,7 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
               await _updateProfile(displayNameController.text.trim());
             },
-            child: const Text('Save'),
+            child: const Text('Сохранить'),
           ),
         ],
       ),
@@ -211,7 +209,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     result.fold(
       onSuccess: (_) {
         widget.onProfileUpdated?.call();
-        _showSuccess('Profile updated successfully');
+        _showSuccess('Профиль обновлён');
       },
       onFailure: (error) {
         _showError(error.message);
@@ -223,7 +221,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('Success'),
+        title: const Text('Успешно'),
         content: Text(message),
         actions: [
           CupertinoDialogAction(
@@ -239,7 +237,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('Error'),
+        title: const Text('Ошибка'),
         content: Text(message),
         actions: [
           CupertinoDialogAction(
@@ -253,30 +251,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildSettingsSection(BuildContext context) {
     return CupertinoListSection.insetGrouped(
-      header: const Text('SETTINGS'),
+      header: const Text('НАСТРОЙКИ'),
       children: [
         CupertinoListTile(
           leading: const Icon(CupertinoIcons.bell, color: CupertinoColors.systemBlue),
-          title: const Text('Notifications'),
+          title: const Text('Уведомления'),
           trailing: const CupertinoListTileChevron(),
           onTap: () {},
         ),
         CupertinoListTile(
           leading: const Icon(CupertinoIcons.lock, color: CupertinoColors.systemBlue),
-          title: const Text('Privacy'),
+          title: const Text('Приватность'),
           trailing: const CupertinoListTileChevron(),
           onTap: () {},
         ),
         CupertinoListTile(
           leading: const Icon(CupertinoIcons.paintbrush, color: CupertinoColors.systemBlue),
-          title: const Text('Appearance'),
+          title: const Text('Оформление'),
           trailing: const CupertinoListTileChevron(),
           onTap: () {},
         ),
         CupertinoListTile(
           leading: const Icon(CupertinoIcons.clock, color: CupertinoColors.systemBlue),
-          title: const Text('Auto-Delete'),
-          subtitle: const Text('Messages delete after 24h'),
+          title: const Text('Автоудаление'),
+          subtitle: const Text('Сообщения удаляются через 24ч'),
           trailing: const CupertinoListTileChevron(),
           onTap: () {},
         ),
@@ -286,22 +284,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildAboutSection() {
     return CupertinoListSection.insetGrouped(
-      header: const Text('ABOUT'),
+      header: const Text('О ПРИЛОЖЕНИИ'),
       children: [
         const CupertinoListTile(
           leading: Icon(CupertinoIcons.info, color: CupertinoColors.systemGrey),
-          title: Text('Version'),
+          title: Text('Версия'),
           additionalInfo: Text(AppConstants.appVersion),
         ),
         CupertinoListTile(
           leading: const Icon(CupertinoIcons.doc_text, color: CupertinoColors.systemGrey),
-          title: const Text('Terms of Service'),
+          title: const Text('Условия использования'),
           trailing: const CupertinoListTileChevron(),
           onTap: () {},
         ),
         CupertinoListTile(
           leading: const Icon(CupertinoIcons.hand_raised, color: CupertinoColors.systemGrey),
-          title: const Text('Privacy Policy'),
+          title: const Text('Политика конфиденциальности'),
           trailing: const CupertinoListTileChevron(),
           onTap: () {},
         ),
@@ -318,7 +316,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: _isUpdating
             ? const CupertinoActivityIndicator()
             : const Text(
-                'Logout',
+                'Выйти',
                 style: TextStyle(color: CupertinoColors.systemRed),
               ),
       ),
@@ -329,12 +327,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: const Text('Выход'),
+        content: const Text('Вы уверены, что хотите выйти?'),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Отмена'),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
@@ -342,7 +340,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
               widget.onLogout?.call();
             },
-            child: const Text('Logout'),
+            child: const Text('Выйти'),
           ),
         ],
       ),

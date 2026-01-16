@@ -8,7 +8,7 @@ void main() {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const ProviderScope(child: MKRApp()));
 
-    // Verify that the app title is displayed
-    expect(find.text('MKR Messenger'), findsWidgets);
+    // Verify that the app title is displayed (MKR logo text)
+    expect(find.text('MKR'), findsWidgets);
   });
 }

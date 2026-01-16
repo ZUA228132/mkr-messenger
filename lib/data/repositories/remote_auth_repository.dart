@@ -194,6 +194,121 @@ class RemoteAuthRepository {
     );
   }
 
+  /// Login with callsign and password (как в Android версии)
+  /// POST /api/auth/login/simple
+  Future<Result<AuthResponse>> loginSimple({
+    required String callsign,
+    required String password,
+  }) async {
+    developer.log(
+      'Logging in user with callsign: $callsign',
+      name: 'RemoteAuthRepository',
+    );
+
+    final result = await _apiClient.post(
+      '/api/auth/login/simple',
+      data: {
+        'callsign': callsign,
+        'password': password,
+      },
+    );
+
+    return result.fold(
+      onSuccess: (response) async {
+        try {
+          final authResponse = AuthResponse.fromJson(
+            response.data as Map<String, dynamic>,
+          );
+
+          await _storage.saveToken(authResponse.token);
+          await _storage.saveUserId(authResponse.userId);
+          _apiClient.setAuthToken(authResponse.token);
+
+          developer.log(
+            'Login successful for callsign: $callsign',
+            name: 'RemoteAuthRepository',
+          );
+
+          return Success(authResponse);
+        } catch (e) {
+          developer.log(
+            'Failed to parse login response: $e',
+            name: 'RemoteAuthRepository',
+          );
+          return Error(ServerFailure('Failed to parse response: $e'));
+        }
+      },
+      onFailure: (apiError) {
+        developer.log(
+          'Login failed: ${apiError.message}',
+          name: 'RemoteAuthRepository',
+        );
+        
+        if (apiError.statusCode == 429) {
+          return Error(const AccountLockedFailure(Duration(minutes: 5)));
+        }
+        
+        return Error(apiError.toFailure());
+      },
+    );
+  }
+
+  /// Register with callsign and password (как в Android версии)
+  /// POST /api/auth/register/simple
+  Future<Result<AuthResponse>> registerSimple({
+    required String callsign,
+    required String displayName,
+    required String password,
+  }) async {
+    developer.log(
+      'Registering user with callsign: $callsign',
+      name: 'RemoteAuthRepository',
+    );
+
+    final result = await _apiClient.post(
+      '/api/auth/register/simple',
+      data: {
+        'callsign': callsign,
+        'displayName': displayName,
+        'password': password,
+      },
+    );
+
+    return result.fold(
+      onSuccess: (response) async {
+        try {
+          final authResponse = AuthResponse.fromJson(
+            response.data as Map<String, dynamic>,
+          );
+
+          await _storage.saveToken(authResponse.token);
+          await _storage.saveUserId(authResponse.userId);
+          _apiClient.setAuthToken(authResponse.token);
+
+          developer.log(
+            'Registration successful for callsign: $callsign',
+            name: 'RemoteAuthRepository',
+          );
+
+          return Success(authResponse);
+        } catch (e) {
+          developer.log(
+            'Failed to parse register response: $e',
+            name: 'RemoteAuthRepository',
+          );
+          return Error(ServerFailure('Failed to parse response: $e'));
+        }
+      },
+      onFailure: (apiError) {
+        developer.log(
+          'Registration failed: ${apiError.message}',
+          name: 'RemoteAuthRepository',
+        );
+        return Error(apiError.toFailure());
+      },
+    );
+  }
+
   /// Logout and clear all credentials
   /// Requirements: 3.4 - Clear all stored credentials on logout
   Future<Result<void>> logout() async {
