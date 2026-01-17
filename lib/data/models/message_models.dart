@@ -112,7 +112,7 @@ class MessageResponse {
 
   @override
   String toString() =>
-      'MessageResponse(id: $id, senderId: $senderId, content: ${content.length > 20 ? '${content.substring(0, 20)}...' : content})';
+      'MessageResponse(id: $id, senderId: $senderId, encryptedContent: ${encryptedContent.length > 20 ? '${encryptedContent.substring(0, 20)}...' : encryptedContent})';
 }
 
 /// Request body for sending a new message
@@ -158,7 +158,7 @@ class SendMessageRequest {
 
   @override
   String toString() =>
-      'SendMessageRequest(chatId: $chatId, type: $type, content: ${content.length > 20 ? '${content.substring(0, 20)}...' : content})';
+      'SendMessageRequest(chatId: $chatId, type: $type, encryptedContent: ${encryptedContent.length > 20 ? '${encryptedContent.substring(0, 20)}...' : encryptedContent})';
 }
 
 /// Response wrapper for list of messages
@@ -254,7 +254,8 @@ class NewMessagePayload {
       id: id,
       chatId: chatId,
       senderId: senderId,
-      content: content,
+      encryptedContent: content,
+      nonce: '',
       type: type,
       timestamp: timestamp,
       status: 'sent',

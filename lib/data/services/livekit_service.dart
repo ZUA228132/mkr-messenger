@@ -52,7 +52,18 @@ class LiveKitService {
       );
       
       // Create room
-      _room = Room();
+      _room = Room(
+        roomOptions: RoomOptions(
+          adaptiveStream: true,
+          dynacast: true,
+          defaultAudioPublishOptions: AudioPublishOptions(
+            audioBitrate: 64000, // 64 kbps for speech
+          ),
+          defaultVideoPublishOptions: VideoPublishOptions(
+            videoEncoding: VideoParametersPresets.h720_169.encoding,
+          ),
+        ),
+      );
       
       // Listen to room events using EventsListener
       _room!.createListener()
@@ -66,15 +77,8 @@ class LiveKitService {
       await _room!.connect(
         _livekitUrl,
         token,
-        roomOptions: RoomOptions(
-          adaptiveStream: true,
-          dynacast: true,
-          defaultAudioPublishOptions: AudioPublishOptions(
-            audioBitrate: 64000, // 64 kbps for speech
-          ),
-          defaultVideoPublishOptions: VideoPublishOptions(
-            videoEncoding: VideoParametersPresets.h720_169.encoding,
-          ),
+        connectOptions: ConnectOptions(
+          autoSubscribe: true,
         ),
       );
       
@@ -169,12 +173,15 @@ class LiveKitService {
   Future<void> switchCamera() async {
     final videoTrack = _localParticipant?.videoTrackPublications.firstOrNull?.track;
     if (videoTrack is LocalVideoTrack) {
-      await videoTrack.setCameraPosition(
-        videoTrack.currentOptions.params.position == CameraPosition.front
-            ? CameraPosition.back
-            : CameraPosition.front,
-      );
-      developer.log('Camera switched', name: 'LiveKitService');
+      final options = videoTrack.currentOptions;
+      if (options is CameraCaptureOptions) {
+        await videoTrack.setCameraPosition(
+          options.cameraPosition == CameraPosition.front
+              ? CameraPosition.back
+              : CameraPosition.front,
+        );
+        developer.log('Camera switched', name: 'LiveKitService');
+      }
     }
   }
   
