@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../data/datasources/websocket_service.dart';
 import '../../data/repositories/remote_call_repository.dart';
@@ -440,7 +442,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(ctx);
-              // TODO: Pick photo from gallery
+              _pickImage();
             },
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -454,7 +456,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(ctx);
-              // TODO: Pick video from gallery
+              _pickVideo();
             },
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -468,7 +470,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(ctx);
-              // TODO: Pick file
+              _showError('Отправка файлов будет добавлена в следующем обновлении');
             },
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -486,6 +488,155 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           child: const Text('Отмена'),
         ),
       ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+
+      if (image != null && mounted) {
+        _sendImageMessage(File(image.path));
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('Не удалось выбрать фото: $e');
+      }
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    try {
+      final picker = ImagePicker();
+      final XFile? video = await picker.pickVideo(
+        source: ImageSource.gallery,
+      );
+
+      if (video != null && mounted) {
+        _sendVideoMessage(File(video.path));
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('Не удалось выбрать видео: $e');
+      }
+    }
+  }
+
+  Future<void> _sendImageMessage(File imageFile) async {
+    if (widget.messageRepository == null) {
+      _showError('Отправка изображений недоступна');
+      return;
+    }
+
+    // Add optimistic message
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    final optimisticMessage = Message(
+      id: tempId,
+      chatId: widget.chatId,
+      senderId: widget.currentUserId,
+      content: imageFile.path,
+      type: MessageType.image,
+      timestamp: DateTime.now(),
+      status: MessageStatus.sending,
+    );
+
+    setState(() {
+      _messages.insert(0, optimisticMessage);
+      _isSending = true;
+    });
+
+    // Upload image to server
+    final result = await widget.messageRepository!.sendMediaMessage(
+      chatId: widget.chatId,
+      filePath: imageFile.path,
+      mediaType: 'IMAGE',
+    );
+
+    if (!mounted) return;
+
+    result.fold(
+      onSuccess: (message) {
+        setState(() {
+          final index = _messages.indexWhere((m) => m.id == tempId);
+          if (index != -1) {
+            _messages[index] = message;
+          }
+          _isSending = false;
+        });
+      },
+      onFailure: (error) {
+        setState(() {
+          final index = _messages.indexWhere((m) => m.id == tempId);
+          if (index != -1) {
+            _messages[index] = optimisticMessage.copyWith(
+              status: MessageStatus.failed,
+            );
+          }
+          _isSending = false;
+        });
+        _showError('Не удалось отправить фото: ${error.message}');
+      },
+    );
+  }
+
+  Future<void> _sendVideoMessage(File videoFile) async {
+    if (widget.messageRepository == null) {
+      _showError('Отправка видео недоступна');
+      return;
+    }
+
+    // Add optimistic message
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    final optimisticMessage = Message(
+      id: tempId,
+      chatId: widget.chatId,
+      senderId: widget.currentUserId,
+      content: videoFile.path,
+      type: MessageType.video,
+      timestamp: DateTime.now(),
+      status: MessageStatus.sending,
+    );
+
+    setState(() {
+      _messages.insert(0, optimisticMessage);
+      _isSending = true;
+    });
+
+    // Upload video to server
+    final result = await widget.messageRepository!.sendMediaMessage(
+      chatId: widget.chatId,
+      filePath: videoFile.path,
+      mediaType: 'VIDEO',
+    );
+
+    if (!mounted) return;
+
+    result.fold(
+      onSuccess: (message) {
+        setState(() {
+          final index = _messages.indexWhere((m) => m.id == tempId);
+          if (index != -1) {
+            _messages[index] = message;
+          }
+          _isSending = false;
+        });
+      },
+      onFailure: (error) {
+        setState(() {
+          final index = _messages.indexWhere((m) => m.id == tempId);
+          if (index != -1) {
+            _messages[index] = optimisticMessage.copyWith(
+              status: MessageStatus.failed,
+            );
+          }
+          _isSending = false;
+        });
+        _showError('Не удалось отправить видео: ${error.message}');
+      },
     );
   }
 
@@ -1220,7 +1371,7 @@ class _MessageBubble extends StatelessWidget {
 
   Widget _buildContent(BuildContext context) {
     final textColor = isMe ? CupertinoColors.white : CupertinoColors.label.resolveFrom(context);
-    
+
     switch (message.type) {
       case MessageType.text:
         return Text(
@@ -1231,23 +1382,9 @@ class _MessageBubble extends StatelessWidget {
           ),
         );
       case MessageType.image:
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(CupertinoIcons.photo, size: 20, color: textColor),
-            const SizedBox(width: 8),
-            Text('Фото', style: TextStyle(color: textColor)),
-          ],
-        );
+        return _buildImageContent(context);
       case MessageType.video:
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(CupertinoIcons.videocam, size: 20, color: textColor),
-            const SizedBox(width: 8),
-            Text('Видео', style: TextStyle(color: textColor)),
-          ],
-        );
+        return _buildVideoContent(context);
       case MessageType.audio:
         return Row(
           mainAxisSize: MainAxisSize.min,
@@ -1271,6 +1408,217 @@ class _MessageBubble extends StatelessWidget {
       case MessageType.videoNote:
         return _buildVideoNote(context);
     }
+  }
+
+  Widget _buildImageContent(BuildContext context) {
+    // Check if content is a URL (starts with http) or local file path
+    final isNetworkImage = message.content.startsWith('http');
+
+    if (isNetworkImage) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(
+          message.content,
+          width: 200,
+          fit: BoxFit.cover,
+          errorBuilder: (ctx, error, stackTrace) {
+            return Container(
+              width: 200,
+              height: 150,
+              decoration: BoxDecoration(
+                color: isMe
+                    ? CupertinoColors.white.withAlpha(51)
+                    : CupertinoColors.systemGrey5,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(CupertinoIcons.photo, size: 32),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Не удалось загрузить',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isMe ? CupertinoColors.white : CupertinoColors.systemGrey,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+          loadingBuilder: (ctx, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              width: 200,
+              height: 150,
+              decoration: BoxDecoration(
+                color: isMe
+                    ? CupertinoColors.white.withAlpha(51)
+                    : CupertinoColors.systemGrey5,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const CupertinoActivityIndicator(),
+            );
+          },
+        ),
+      );
+    } else {
+      // Local file (during sending)
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (message.status == MessageStatus.sending) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.file(
+                File(message.content),
+                width: 200,
+                fit: BoxFit.cover,
+                errorBuilder: (ctx, error, stackTrace) {
+                  return Container(
+                    width: 200,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      color: isMe
+                          ? CupertinoColors.white.withAlpha(51)
+                          : CupertinoColors.systemGrey5,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(CupertinoIcons.photo, size: 32),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CupertinoActivityIndicator(),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Отправка...',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isMe ? CupertinoColors.white.withAlpha(179) : CupertinoColors.systemGrey,
+                  ),
+                ),
+              ],
+            ),
+          ] else if (message.status == MessageStatus.sent) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.file(
+                File(message.content),
+                width: 200,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ] else ...[
+            // Failed status
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(CupertinoIcons.exclamationmark_triangle, size: 16, color: CupertinoColors.systemRed),
+                const SizedBox(width: 6),
+                Text(
+                  'Не отправлено',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: CupertinoColors.systemRed,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      );
+    }
+  }
+
+  Widget _buildVideoContent(BuildContext context) {
+    final isNetworkVideo = message.content.startsWith('http');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 200,
+          height: 150,
+          decoration: BoxDecoration(
+            color: isMe
+                ? CupertinoColors.white.withAlpha(51)
+                : CupertinoColors.systemGrey5,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (isNetworkVideo && message.status == MessageStatus.sent)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    message.content,
+                    width: 200,
+                    height: 150,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                )
+              else if (!isNetworkVideo)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(
+                    File(message.content),
+                    width: 200,
+                    height: 150,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ),
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: CupertinoColors.black.withAlpha(128),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  CupertinoIcons.play_fill,
+                  color: CupertinoColors.white,
+                  size: 24,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (message.status == MessageStatus.sending) ...[
+          const SizedBox(height: 4),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(
+                width: 12,
+                height: 12,
+                child: CupertinoActivityIndicator(),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Отправка...',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isMe ? CupertinoColors.white.withAlpha(179) : CupertinoColors.systemGrey,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
   }
 
   Widget _buildVoiceNote(BuildContext context) {

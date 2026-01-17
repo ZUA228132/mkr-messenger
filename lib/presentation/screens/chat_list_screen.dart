@@ -1,11 +1,12 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../data/repositories/remote_user_repository.dart';
 import '../../domain/entities/chat.dart';
 import '../../domain/entities/message.dart';
 import '../../domain/entities/user.dart';
 
-/// Экран списка чатов — чистый Apple стиль с Large Title
+/// Экран списка чатов — чистый Apple стиль с Dynamic Island заголовком
 class ChatListScreen extends StatefulWidget {
   final List<Chat> chats;
   final String currentUserId;
@@ -32,13 +33,38 @@ class ChatListScreen extends StatefulWidget {
   State<ChatListScreen> createState() => _ChatListScreenState();
 }
 
-class _ChatListScreenState extends State<ChatListScreen> {
+class _ChatListScreenState extends State<ChatListScreen>
+    with SingleTickerProviderStateMixin<ChatListScreen> {
   final Map<String, User> _userCache = {};
+  ScrollController? _scrollController;
+  bool _showDynamicIsland = false;
 
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
+    _scrollController!.addListener(_onScroll);
     _loadUsers();
+  }
+
+  @override
+  void dispose() {
+    _scrollController?.removeListener(_onScroll);
+    _scrollController?.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    // Show Dynamic Island when scrolling starts, hide when at top
+    if (_scrollController!.hasClients && mounted) {
+      final offset = _scrollController!.offset;
+
+      if (offset > 50 && !_showDynamicIsland && mounted) {
+        setState(() => _showDynamicIsland = true);
+      } else if (offset < 10 && _showDynamicIsland && mounted) {
+        setState(() => _showDynamicIsland = false);
+      }
+    }
   }
 
   @override
@@ -51,7 +77,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Future<void> _loadUsers() async {
     if (widget.userRepository == null) return;
-    
+
     final userIds = <String>{};
     for (final chat in widget.chats) {
       if (chat.type == ChatType.direct) {
@@ -62,12 +88,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
         }
       }
     }
-    
+
     for (final userId in userIds) {
       final result = await widget.userRepository!.getUser(userId);
       if (!mounted) return;
       result.fold(
-        onSuccess: (user) => setState(() => _userCache[userId] = user),
+        onSuccess: (user) => setState(() => _userCache[userId] = user)),
         onFailure: (_) {},
       );
     }
@@ -85,99 +111,129 @@ class _ChatListScreenState extends State<ChatListScreen> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      child: CustomScrollView(
-        slivers: [
-          // Красивый Large Title Navigation Bar
-          CupertinoSliverNavigationBar(
-            largeTitle: Row(
-              children: [
-                // MKR Logo
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'M',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: CupertinoColors.white,
+      child: Stack(
+        children: [
+          CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              // Large Title с поддержкой collapse
+              CupertinoSliverNavigationBar(
+                largeTitle: Row(
+                  children: [
+                    // MKR Logo
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF6366F1), const Color(0xFF8B5CF6)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'M',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: CupertinoColors.white,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 10),
+                    const Text('Чаты'),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                const Text('Чаты'),
-              ],
-            ),
-            trailing: CupertinoButton(
-              padding: EdgeInsets.zero,
-              onPressed: widget.onNewChat,
-              child: const Icon(CupertinoIcons.square_pencil, size: 24),
-            ),
-            border: null,
+                trailing: CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: widget.onNewChat,
+                  child: const Icon(CupertinoIcons.square_pencil, size: 24),
+                ),
+                border: null,
+              ),
+              // Pull to refresh
+              CupertinoSliverRefreshControl(onRefresh: widget.onRefresh),
+              // Контент
+              _buildSliverContent(),
+            ],
           ),
-          // Pull to refresh
-          CupertinoSliverRefreshControl(onRefresh: widget.onRefresh),
-          // Dynamic Island style security indicator
-          SliverToBoxAdapter(
-            child: _buildDynamicIslandLock(context),
+          // Dynamic Island overlay - поверх navigation bar
+          Positioned(
+            top: 50,
+            left: 16,
+            right: 16,
+            child: _buildDynamicIslandHeader(context),
           ),
-          // Контент
-          _buildSliverContent(),
         ],
       ),
     );
   }
 
-  /// Dynamic Island стиль замок для скриншотов
-  Widget _buildDynamicIslandLock(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 12),
-      child: Center(
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 120,
-          height: 36,
-          decoration: BoxDecoration(
-            color: const Color(0xFF000000).withAlpha(235),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF000000).withAlpha(30),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                CupertinoIcons.lock_fill,
-                color: CupertinoColors.white,
-                size: 14,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'E2E',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: CupertinoColors.white,
-                  letterSpacing: -0.3,
+  /// Dynamic Island стиль заголовок для скриншотов - появляется при скролле
+  Widget _buildDynamicIslandHeader(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: _showDynamicIsland ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      child: Container(
+        height: 36,
+        decoration: BoxDecoration(
+          color: const Color(0xFF000000).withAlpha(235),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF000000).withAlpha(30),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                shape: BoxShape.circle,
               ),
-            ],
-          ),
+              child: const Icon(
+                CupertinoIcons.lock_shield_fill,
+                color: CupertinoColors.white,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'MKR Messenger',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: CupertinoColors.white,
+                  ),
+                ),
+                Text(
+                  'Защищённое соединение',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: CupertinoColors.systemGrey.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -198,12 +254,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(CupertinoIcons.exclamationmark_triangle, size: 48, color: CupertinoColors.systemRed),
+                const Icon(CupertinoIcons.exclamationmark_triangle, size: 48, color: CoronaColor(0xFF8B5CF6)),
                 const SizedBox(height: 16),
-                const Text('Не удалось загрузить', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                Text('Не удалось загрузить', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
-                Text(widget.errorMessage!, style: const TextStyle(color: CupertinoColors.systemGrey), textAlign: TextAlign.center),
-                const SizedBox(height: 24),
+                Text(widget.errorMessage!, style: TextStyle(color: CupertinoColors.systemGrey), textAlign: TextAlign.center),
+                const SizedBox(height: ),
                 CupertinoButton.filled(onPressed: widget.onRefresh, child: const Text('Повторить')),
               ],
             ),
@@ -224,10 +280,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFF6366F1).withAlpha(30),
-                      const Color(0xFF8B5CF6).withAlpha(20),
-                    ],
-                  ),
+                    const Color(0xFF6366F1).withAlpha(30),
+                    const Color(0xFF8B5CF6).withAlpha(20),
+                  ],
+                ),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(CupertinoIcons.chat_bubble_2, size: 40, color: Color(0xFF6366F1)),
@@ -289,9 +345,9 @@ class _ChatTile extends StatelessWidget {
     } else {
       name = 'Чат';
     }
-    
+
     final preview = chat.lastMessage == null ? 'Нет сообщений' : _preview(chat.lastMessage!);
-    final time = chat.lastMessage != null ? _time(chat.lastMessage!.timestamp) : '';
+    final time = chat.lastMessage != null ? _time(chat.lastMessage.timestamp) : '';
     final isOnline = recipientUser?.isOnline ?? false;
 
     return CupertinoListTile(

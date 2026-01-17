@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../data/repositories/remote_user_repository.dart';
 import '../../domain/entities/user.dart';
+import 'app_lock_screen.dart';
 import 'legal_screen.dart';
 
 /// Экран настроек — чистый Apple стиль
@@ -38,6 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _displayName = '';
   String _callsign = '';
   String _bio = '';
+  File? _avatarImageFile;
 
   final _autoDeleteOptions = ['1 час', '24 часа', '7 дней', 'Никогда'];
   final _themeOptions = ['Светлая', 'Тёмная', 'Системная'];
@@ -47,6 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    _loadSettings();
     _loadUserIfNeeded();
   }
 
@@ -55,6 +61,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.didUpdateWidget(oldWidget);
     if (widget.user != oldWidget.user) {
       setState(() {});
+    }
+  }
+
+  Future<void> _loadSettings() async {
+    final lockEnabled = await AppLockService.isLockEnabled();
+    final biometricEnabled = await AppLockService.isBiometricEnabled();
+
+    if (mounted) {
+      setState(() {
+        _appLockEnabled = lockEnabled;
+        _biometricEnabled = biometricEnabled;
+      });
     }
   }
 
@@ -71,7 +89,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       onSuccess: (user) => setState(() {
         _loadedUser = user;
         _displayName = user.displayName ?? '';
-        _callsign = user.callsign ?? '';
+        _callsign = user.callsign;
         _bio = user.bio ?? '';
         _isLoading = false;
       }),
@@ -468,49 +486,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // === Actions ===
 
-  void _toggleAppLock(bool value) {
+  Future<void> _toggleAppLock(bool value) async {
     if (value) {
-      _showAppLockSetup();
+      // Check if PIN is already set
+      final hasPin = await AppLockService.hasPin();
+      if (hasPin) {
+        // Just enable
+        await AppLockService.setLockEnabled(true);
+        if (mounted) {
+          setState(() => _appLockEnabled = true);
+        }
+      } else {
+        // Show PIN setup screen
+        if (!mounted) return;
+        Navigator.of(context).push(
+          CupertinoPageRoute(
+            builder: (_) => AppLockScreen(
+              enableSetup: true,
+              onSetupComplete: () async {
+                await AppLockService.setLockEnabled(true);
+                if (mounted) {
+                  setState(() => _appLockEnabled = true);
+                }
+              },
+            ),
+          ),
+        );
+      }
     } else {
-      setState(() => _appLockEnabled = false);
+      await AppLockService.setLockEnabled(false);
+      if (mounted) {
+        setState(() => _appLockEnabled = false);
+      }
     }
   }
 
-  void _showAppLockSetup() {
-    // TODO: Implement full passcode setup flow
-    showCupertinoDialog(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Блокировка приложения'),
-        content: const Text(
-          'Эта функция позволит защитить приложение пин-кодом или биометрией.\n\n'
-          'Полная функциональность будет добавлена в следующем обновлении.',
-        ),
-        actions: [
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => setState(() => _appLockEnabled = false),
-            child: const Text('Отмена'),
-          ),
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () {
-              setState(() => _appLockEnabled = true);
-              Navigator.pop(ctx);
-            },
-            child: const Text('Включить'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _toggleBiometric(bool value) {
+  Future<void> _toggleBiometric(bool value) async {
     if (value) {
-      // Check if biometric is available
-      setState(() => _biometricEnabled = true);
-    } else {
-      setState(() => _biometricEnabled = false);
+      // Check if PIN is set first
+      final hasPin = await AppLockService.hasPin();
+      if (!hasPin) {
+        _showError('Сначала установите PIN-код');
+        return;
+      }
+    }
+
+    await AppLockService.setBiometricEnabled(value);
+    if (mounted) {
+      setState(() => _biometricEnabled = value);
     }
   }
 
@@ -534,260 +557,389 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoModalPopup(
       context: context,
       builder: (ctx) => Container(
-        height: 520,
+        height: MediaQuery.of(ctx).size.height * 0.85,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: CupertinoColors.systemBackground.resolveFrom(context),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Отмена'),
-                ),
-                const Text(
-                  'Редактировать профиль',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-                ),
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: _isSaving
-                      ? null
-                      : () async {
-                          final newName = nameController.text.trim();
-                          final newCallsign = callsignController.text.trim();
-                          final newBio = bioController.text.trim();
-
-                          if (newName.isEmpty) {
-                            _showError('Введите имя');
-                            return;
-                          }
-
-                          if (newCallsign.isEmpty) {
-                            _showError('Введите username');
-                            return;
-                          }
-
-                          setState(() => _isSaving = true);
-                          Navigator.pop(ctx);
-
-                          if (widget.userRepository != null) {
-                            final result = await widget.userRepository!
-                                .updateProfile(
-                              displayName: newName,
-                              callsign: newCallsign,
-                              bio: newBio,
-                            );
-
-                            if (!mounted) return;
-
-                            result.fold(
-                              onSuccess: (updatedUser) {
-                                setState(() {
-                                  _loadedUser = updatedUser;
-                                  _displayName = newName;
-                                  _callsign = newCallsign;
-                                  _bio = newBio;
-                                  _isSaving = false;
-                                });
-                                widget.onProfileUpdated?.call();
-                              },
-                              onFailure: (error) {
-                                setState(() => _isSaving = false);
-                                _showError(error.message);
-                              },
-                            );
-                          } else {
-                            setState(() {
-                              _displayName = newName;
-                              _callsign = newCallsign;
-                              _bio = newBio;
-                              _isSaving = false;
-                            });
-                          }
-                        },
-                  child: _isSaving
-                      ? const CupertinoActivityIndicator()
-                      : const Text(
-                          'Готово',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            // Avatar
-            Center(
-              child: Stack(
+        child: SafeArea(
+          top: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width: 90,
-                    height: 90,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [CupertinoColors.systemBlue, CupertinoColors.systemIndigo],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        (_displayName.isNotEmpty ? _displayName[0] : '?').toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w600,
-                          color: CupertinoColors.white,
-                        ),
-                      ),
-                    ),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Отмена'),
                   ),
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: GestureDetector(
-                      onTap: () {
-                        showCupertinoDialog(
-                          context: ctx,
-                          builder: (dialogCtx) => CupertinoAlertDialog(
-                            title: const Text('Фото профиля'),
-                            content: const Text('Выберите источник фото'),
-                            actions: [
-                              CupertinoDialogAction(
-                                onPressed: () => Navigator.pop(dialogCtx),
-                                child: const Text('Камера'),
-                              ),
-                              CupertinoDialogAction(
-                                onPressed: () => Navigator.pop(dialogCtx),
-                                child: const Text('Галерея'),
-                              ),
-                              CupertinoDialogAction(
-                                onPressed: () => Navigator.pop(dialogCtx),
-                                isDestructiveAction: true,
-                                child: const Text('Отмена'),
-                              ),
-                            ],
+                  const Text(
+                    'Редактировать профиль',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                  ),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: _isSaving
+                        ? null
+                        : () async {
+                            final newName = nameController.text.trim();
+                            final newCallsign = callsignController.text.trim();
+                            final newBio = bioController.text.trim();
+
+                            if (newName.isEmpty) {
+                              _showError('Введите имя');
+                              return;
+                            }
+
+                            if (newCallsign.isEmpty) {
+                              _showError('Введите username');
+                              return;
+                            }
+
+                            setState(() => _isSaving = true);
+                            Navigator.pop(ctx);
+
+                            if (widget.userRepository != null) {
+                              // First upload avatar if selected
+                              if (_avatarImageFile != null) {
+                                final avatarResult = await widget.userRepository!
+                                    .uploadAvatar(_avatarImageFile!.path);
+
+                                if (!mounted) return;
+
+                                avatarResult.fold(
+                                  onSuccess: (_) {
+                                    // Avatar uploaded, now update profile
+                                    _updateProfileData(newName, newCallsign, newBio);
+                                  },
+                                  onFailure: (error) {
+                                    setState(() => _isSaving = false);
+                                    _showError('Не удалось загрузить аватарку: ${error.message}');
+                                  },
+                                );
+                              } else {
+                                // No avatar to upload, just update profile
+                                _updateProfileData(newName, newCallsign, newBio);
+                              }
+                            } else {
+                              setState(() {
+                                _displayName = newName;
+                                _callsign = newCallsign;
+                                _bio = newBio;
+                                _isSaving = false;
+                                _avatarImageFile = null;
+                              });
+                            }
+                          },
+                    child: _isSaving
+                        ? const CupertinoActivityIndicator()
+                        : const Text(
+                            'Готово',
+                            style: TextStyle(fontWeight: FontWeight.w600),
                           ),
-                        );
-                      },
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: CupertinoColors.systemGrey5.resolveFrom(context),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          CupertinoIcons.camera_fill,
-                          size: 16,
-                          color: CupertinoColors.systemGrey,
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 24),
-            // Fields
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Name field
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 24),
+              // Avatar
+              Center(
+                child: Stack(
                   children: [
-                    const Text(
-                      'Имя',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: CupertinoColors.systemGrey,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    CupertinoTextField(
-                      controller: nameController,
-                      placeholder: 'Ваше имя',
-                      padding: const EdgeInsets.all(14),
+                    Container(
+                      width: 90,
+                      height: 90,
                       decoration: BoxDecoration(
-                        color: CupertinoColors.systemGrey6.resolveFrom(context),
-                        borderRadius: BorderRadius.circular(10),
+                        gradient: const LinearGradient(
+                          colors: [CupertinoColors.systemBlue, CupertinoColors.systemIndigo],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        shape: BoxShape.circle,
+                        image: _avatarImageFile != null
+                            ? DecorationImage(
+                                image: FileImage(_avatarImageFile!),
+                                fit: BoxFit.cover,
+                              )
+                            : (_effectiveUser?.avatarUrl != null && _effectiveUser!.avatarUrl!.isNotEmpty)
+                                ? DecorationImage(
+                                    image: NetworkImage(_effectiveUser!.avatarUrl!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                       ),
-                      style: const TextStyle(fontSize: 16),
+                      child: _avatarImageFile == null && (_effectiveUser?.avatarUrl == null || _effectiveUser!.avatarUrl!.isEmpty)
+                          ? Center(
+                              child: Text(
+                                (_displayName.isNotEmpty ? _displayName[0] : '?').toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.w600,
+                                  color: CupertinoColors.white,
+                                ),
+                              ),
+                            )
+                          : null,
+                    ),
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: GestureDetector(
+                        onTap: () => _pickAvatarImage(ctx),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.systemGrey5.resolveFrom(context),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            CupertinoIcons.camera_fill,
+                            size: 16,
+                            color: CupertinoColors.systemGrey,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                // Callsign field
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Username',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: CupertinoColors.systemGrey,
+              ),
+              const SizedBox(height: 24),
+              // Fields - wrapped in Expanded with SingleChildScrollView
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(ctx).viewInsets.bottom,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Name field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Имя',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: CupertinoColors.systemGrey,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          CupertinoTextField(
+                            controller: nameController,
+                            placeholder: 'Ваше имя',
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: CupertinoColors.systemGrey6.resolveFrom(context),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    CupertinoTextField(
-                      controller: callsignController,
-                      placeholder: 'username',
-                      prefix: const Padding(
-                        padding: EdgeInsets.only(left: 12, right: 4),
-                        child: Text('@', style: TextStyle(fontSize: 16)),
+                      const SizedBox(height: 16),
+                      // Callsign field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Username',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: CupertinoColors.systemGrey,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          CupertinoTextField(
+                            controller: callsignController,
+                            placeholder: 'username',
+                            prefix: const Padding(
+                              padding: EdgeInsets.only(left: 12, right: 4),
+                              child: Text('@', style: TextStyle(fontSize: 16)),
+                            ),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: CupertinoColors.systemGrey6.resolveFrom(context),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ],
                       ),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.systemGrey6.resolveFrom(context),
-                        borderRadius: BorderRadius.circular(10),
+                      const SizedBox(height: 16),
+                      // Bio field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'О себе',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: CupertinoColors.systemGrey,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          CupertinoTextField(
+                            controller: bioController,
+                            placeholder: 'Расскажите о себе',
+                            maxLines: 3,
+                            minLines: 3,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: CupertinoColors.systemGrey6.resolveFrom(context),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ],
                       ),
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ],
+                      const SizedBox(height: 32),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
-                // Bio field
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'О себе',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: CupertinoColors.systemGrey,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    CupertinoTextField(
-                      controller: bioController,
-                      placeholder: 'Расскажите о себе',
-                      maxLines: 3,
-                      minLines: 3,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.systemGrey6.resolveFrom(context),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Future<void> _pickAvatarImage(BuildContext ctx) async {
+    showCupertinoModalPopup(
+      context: ctx,
+      builder: (popupCtx) => CupertinoActionSheet(
+        title: const Text('Фото профиля'),
+        message: const Text('Выберите источник фото'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () async {
+              Navigator.pop(popupCtx);
+              await _pickImageFromCamera();
+            },
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.camera, color: CupertinoColors.systemBlue),
+                SizedBox(width: 8),
+                Text('Камера'),
+              ],
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () async {
+              Navigator.pop(popupCtx);
+              await _pickImageFromGallery();
+            },
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.photo, color: CupertinoColors.systemGreen),
+                SizedBox(width: 8),
+                Text('Галерея'),
+              ],
+            ),
+          ),
+          if (_avatarImageFile != null || (_effectiveUser?.avatarUrl != null && _effectiveUser!.avatarUrl!.isNotEmpty))
+            CupertinoActionSheetAction(
+              onPressed: () async {
+                Navigator.pop(popupCtx);
+                setState(() => _avatarImageFile = null);
+                // TODO: Delete avatar from server
+                _showError('Аватарка удалена');
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(CupertinoIcons.delete, color: CupertinoColors.systemRed),
+                  SizedBox(width: 8),
+                  Text('Удалить фото'),
+                ],
+              ),
+            ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDestructiveAction: true,
+          onPressed: () => Navigator.pop(popupCtx),
+          child: const Text('Отмена'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImageFromCamera() async {
+    try {
+      final picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+        maxWidth: 512,
+        maxHeight: 512,
+      );
+
+      if (image != null && mounted) {
+        setState(() => _avatarImageFile = File(image.path));
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('Не удалось сделать фото: $e');
+      }
+    }
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 512,
+        maxHeight: 512,
+      );
+
+      if (image != null && mounted) {
+        setState(() => _avatarImageFile = File(image.path));
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('Не удалось выбрать фото: $e');
+      }
+    }
+  }
+
+  Future<void> _updateProfileData(String newName, String newCallsign, String newBio) async {
+    final result = await widget.userRepository!.updateProfile(
+      displayName: newName,
+      callsign: newCallsign,
+      bio: newBio,
+    );
+
+    if (!mounted) return;
+
+    result.fold(
+      onSuccess: (updatedUser) {
+        setState(() {
+          _loadedUser = updatedUser;
+          _displayName = newName;
+          _callsign = newCallsign;
+          _bio = newBio;
+          _isSaving = false;
+          _avatarImageFile = null;
+        });
+        widget.onProfileUpdated?.call();
+      },
+      onFailure: (error) {
+        setState(() => _isSaving = false);
+        _showError(error.message);
+      },
     );
   }
 

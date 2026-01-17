@@ -182,6 +182,60 @@ class RemoteMessageRepository {
     _webSocketService.sendTyping(chatId);
   }
 
+  /// Send media message (image or video)
+  Future<Result<Message>> sendMediaMessage({
+    required String chatId,
+    required String filePath,
+    required String mediaType, // 'IMAGE' or 'VIDEO'
+  }) async {
+    developer.log(
+      'Sending media message to chat: $chatId (type: $mediaType)',
+      name: 'RemoteMessageRepository',
+    );
+
+    final result = await _apiClient.uploadFile(
+      '/api/messages/$chatId/media',
+      filePath: filePath,
+      fieldName: 'media',
+      additionalFields: {'type': mediaType},
+    );
+
+    return result.fold(
+      onSuccess: (response) {
+        try {
+          developer.log(
+            'Send media message response: ${response.data}',
+            name: 'RemoteMessageRepository',
+          );
+          final messageResponse = MessageResponse.fromJson(
+            response.data as Map<String, dynamic>,
+          );
+          final message = messageResponse.toEntity();
+
+          developer.log(
+            'Media message sent successfully: ${message.id}',
+            name: 'RemoteMessageRepository',
+          );
+
+          return Success(message);
+        } catch (e) {
+          developer.log(
+            'Failed to parse send media message response: $e',
+            name: 'RemoteMessageRepository',
+          );
+          return Failure(ApiError(message: 'Failed to parse message: $e'));
+        }
+      },
+      onFailure: (apiError) {
+        developer.log(
+          'Failed to send media message: ${apiError.message}',
+          name: 'RemoteMessageRepository',
+        );
+        return Failure(apiError);
+      },
+    );
+  }
+
   /// Mark messages as read
   Future<Result<void>> markAsRead(String chatId, List<String> messageIds) async {
     developer.log(
