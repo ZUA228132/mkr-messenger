@@ -127,9 +127,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
           // Pull to refresh
           CupertinoSliverRefreshControl(onRefresh: widget.onRefresh),
-          // Красивый блок - статус безопасности (после pull to refresh)
+          // Dynamic Island style security indicator
           SliverToBoxAdapter(
-            child: _buildSecurityBanner(context),
+            child: _buildDynamicIslandLock(context),
           ),
           // Контент
           _buildSliverContent(),
@@ -138,109 +138,47 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  /// Красивый баннер безопасности под монобровь
-  Widget _buildSecurityBanner(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF6366F1).withAlpha(30),
-            const Color(0xFF8B5CF6).withAlpha(20),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF6366F1).withAlpha(50),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+  /// Dynamic Island стиль замок для скриншотов
+  Widget _buildDynamicIslandLock(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 12),
+      child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 120,
+          height: 36,
+          decoration: BoxDecoration(
+            color: const Color(0xFF000000).withAlpha(235),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF000000).withAlpha(30),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              CupertinoIcons.lock_shield_fill,
-              color: CupertinoColors.white,
-              size: 24,
-            ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'MKR Messenger',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: CupertinoColors.label.resolveFrom(context),
-                  ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                CupertinoIcons.lock_fill,
+                color: CupertinoColors.white,
+                size: 14,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'E2E',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: CupertinoColors.white,
+                  letterSpacing: -0.3,
                 ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: CupertinoColors.systemGreen,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Защищённое соединение',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: CupertinoColors.secondaryLabel.resolveFrom(context),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: CupertinoColors.systemGreen.withAlpha(30),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  CupertinoIcons.checkmark_shield_fill,
-                  color: CupertinoColors.systemGreen,
-                  size: 14,
-                ),
-                SizedBox(width: 4),
-                Text(
-                  'E2E',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: CupertinoColors.systemGreen,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

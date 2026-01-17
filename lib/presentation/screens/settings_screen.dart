@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import '../../core/constants/app_constants.dart';
 import '../../data/repositories/remote_user_repository.dart';
 import '../../domain/entities/user.dart';
+import 'legal_screen.dart';
 
 /// Экран настроек — чистый Apple стиль
 class SettingsScreen extends StatefulWidget {
@@ -26,11 +27,17 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _biometricEnabled = false;
+  bool _appLockEnabled = false;
   int _autoDeleteIndex = 1;
   int _themeIndex = 2; // 0=light, 1=dark, 2=system
   User? _loadedUser;
   bool _isLoading = false;
   bool _isSaving = false;
+
+  // Profile editing state
+  String _displayName = '';
+  String _callsign = '';
+  String _bio = '';
 
   final _autoDeleteOptions = ['1 час', '24 часа', '7 дней', 'Никогда'];
   final _themeOptions = ['Светлая', 'Тёмная', 'Системная'];
@@ -63,6 +70,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     result.fold(
       onSuccess: (user) => setState(() {
         _loadedUser = user;
+        _displayName = user.displayName ?? '';
+        _callsign = user.callsign ?? '';
+        _bio = user.bio ?? '';
         _isLoading = false;
       }),
       onFailure: (_) => setState(() => _isLoading = false),
@@ -115,6 +125,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildProfileSection(String displayName, String callsign, String firstLetter) {
+    final user = _effectiveUser;
+    final bio = user?.bio ?? '';
+
     return GestureDetector(
       onTap: () => _showProfileEditor(),
       child: Container(
@@ -170,6 +183,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       color: CupertinoColors.secondaryLabel.resolveFrom(context),
                     ),
                   ),
+                  if (bio.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      bio,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: CupertinoColors.tertiaryLabel.resolveFrom(context),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -198,6 +223,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
+              'БЕЗОПАСНОСТЬ',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: CupertinoColors.secondaryLabel.resolveFrom(context),
+              ),
+            ),
+          ),
+          _buildSettingRow(
+            icon: CupertinoIcons.lock_shield_fill,
+            iconColor: CupertinoColors.systemBlue,
+            title: 'Блокировка приложения',
+            subtitle: _appLockEnabled ? 'Включена' : 'Отключена',
+            trailing: CupertinoSwitch(
+              value: _appLockEnabled,
+              onChanged: (v) => _toggleAppLock(v),
+            ),
+          ),
+          _buildDivider(),
+          _buildSettingRow(
+            icon: CupertinoIcons.hand_draw_fill,
+            iconColor: CupertinoColors.systemGreen,
+            title: 'Face ID / Touch ID',
+            trailing: CupertinoSwitch(
+              value: _biometricEnabled,
+              onChanged: (v) => _toggleBiometric(v),
+            ),
+          ),
+          _buildDivider(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(
               'НАСТРОЙКИ',
               style: TextStyle(
                 fontSize: 13,
@@ -213,16 +270,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: CupertinoSwitch(
               value: _notificationsEnabled,
               onChanged: (v) => setState(() => _notificationsEnabled = v),
-            ),
-          ),
-          _buildDivider(),
-          _buildSettingRow(
-            icon: CupertinoIcons.lock_fill,
-            iconColor: CupertinoColors.systemBlue,
-            title: 'Face ID / Touch ID',
-            trailing: CupertinoSwitch(
-              value: _biometricEnabled,
-              onChanged: (v) => setState(() => _biometricEnabled = v),
             ),
           ),
           _buildDivider(),
@@ -279,14 +326,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: CupertinoIcons.doc_text_fill,
             iconColor: CupertinoColors.systemGrey,
             title: 'Условия использования',
-            onTap: () => _showInfo('Условия использования'),
+            onTap: () => Navigator.of(context).push(
+              CupertinoPageRoute(builder: (_) => const TermsOfUseScreen()),
+            ),
           ),
           _buildDivider(),
           _buildSettingRow(
             icon: CupertinoIcons.hand_raised_fill,
             iconColor: CupertinoColors.systemGrey,
             title: 'Конфиденциальность',
-            onTap: () => _showInfo('Политика конфиденциальности'),
+            onTap: () => Navigator.of(context).push(
+              CupertinoPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+            ),
           ),
         ],
       ),
@@ -297,6 +348,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required IconData icon,
     required Color iconColor,
     required String title,
+    String? subtitle,
     String? value,
     Widget? trailing,
     VoidCallback? onTap,
@@ -320,11 +372,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Icon(icon, color: CupertinoColors.white, size: 18),
             ),
             const SizedBox(width: 12),
-            // Title
+            // Title and Subtitle
             Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(fontSize: 17),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontSize: 17),
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle!,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                      ),
+                    ),
+                ],
               ),
             ),
             // Value or Trailing
@@ -403,14 +468,73 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // === Actions ===
 
+  void _toggleAppLock(bool value) {
+    if (value) {
+      _showAppLockSetup();
+    } else {
+      setState(() => _appLockEnabled = false);
+    }
+  }
+
+  void _showAppLockSetup() {
+    // TODO: Implement full passcode setup flow
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Блокировка приложения'),
+        content: const Text(
+          'Эта функция позволит защитить приложение пин-кодом или биометрией.\n\n'
+          'Полная функциональность будет добавлена в следующем обновлении.',
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => setState(() => _appLockEnabled = false),
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () {
+              setState(() => _appLockEnabled = true);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Включить'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _toggleBiometric(bool value) {
+    if (value) {
+      // Check if biometric is available
+      setState(() => _biometricEnabled = true);
+    } else {
+      setState(() => _biometricEnabled = false);
+    }
+  }
+
   void _showProfileEditor() {
     final user = _effectiveUser;
-    final nameController = TextEditingController(text: user?.displayName ?? '');
+
+    // Initialize controllers with current values or empty strings
+    final displayName = user?.displayName ?? '';
+    final callsign = user?.callsign ?? '';
+    final bio = user?.bio ?? '';
+
+    // Update local state if not already set
+    if (_displayName.isEmpty) _displayName = displayName;
+    if (_callsign.isEmpty) _callsign = callsign;
+    if (_bio.isEmpty) _bio = bio;
+
+    final nameController = TextEditingController(text: _displayName);
+    final callsignController = TextEditingController(text: _callsign);
+    final bioController = TextEditingController(text: _bio);
 
     showCupertinoModalPopup(
       context: context,
       builder: (ctx) => Container(
-        height: 320,
+        height: 520,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: CupertinoColors.systemBackground.resolveFrom(context),
@@ -429,7 +553,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: const Text('Отмена'),
                 ),
                 const Text(
-                  'Редактировать',
+                  'Редактировать профиль',
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
                 ),
                 CupertinoButton(
@@ -438,14 +562,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ? null
                       : () async {
                           final newName = nameController.text.trim();
-                          if (newName.isEmpty) return;
+                          final newCallsign = callsignController.text.trim();
+                          final newBio = bioController.text.trim();
+
+                          if (newName.isEmpty) {
+                            _showError('Введите имя');
+                            return;
+                          }
+
+                          if (newCallsign.isEmpty) {
+                            _showError('Введите username');
+                            return;
+                          }
 
                           setState(() => _isSaving = true);
                           Navigator.pop(ctx);
 
                           if (widget.userRepository != null) {
                             final result = await widget.userRepository!
-                                .updateProfile(displayName: newName);
+                                .updateProfile(
+                              displayName: newName,
+                              callsign: newCallsign,
+                              bio: newBio,
+                            );
 
                             if (!mounted) return;
 
@@ -453,6 +592,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               onSuccess: (updatedUser) {
                                 setState(() {
                                   _loadedUser = updatedUser;
+                                  _displayName = newName;
+                                  _callsign = newCallsign;
+                                  _bio = newBio;
                                   _isSaving = false;
                                 });
                                 widget.onProfileUpdated?.call();
@@ -463,7 +605,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               },
                             );
                           } else {
-                            setState(() => _isSaving = false);
+                            setState(() {
+                              _displayName = newName;
+                              _callsign = newCallsign;
+                              _bio = newBio;
+                              _isSaving = false;
+                            });
                           }
                         },
                   child: _isSaving
@@ -481,8 +628,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Stack(
                 children: [
                   Container(
-                    width: 80,
-                    height: 80,
+                    width: 90,
+                    height: 90,
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         colors: [CupertinoColors.systemBlue, CupertinoColors.systemIndigo],
@@ -493,9 +640,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     child: Center(
                       child: Text(
-                        (user?.displayName ?? user?.callsign ?? '?')[0].toUpperCase(),
+                        (_displayName.isNotEmpty ? _displayName[0] : '?').toUpperCase(),
                         style: const TextStyle(
-                          fontSize: 32,
+                          fontSize: 36,
                           fontWeight: FontWeight.w600,
                           color: CupertinoColors.white,
                         ),
@@ -505,17 +652,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Positioned(
                     right: 0,
                     bottom: 0,
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.systemGrey5.resolveFrom(context),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        CupertinoIcons.camera_fill,
-                        size: 14,
-                        color: CupertinoColors.systemGrey,
+                    child: GestureDetector(
+                      onTap: () {
+                        showCupertinoDialog(
+                          context: ctx,
+                          builder: (dialogCtx) => CupertinoAlertDialog(
+                            title: const Text('Фото профиля'),
+                            content: const Text('Выберите источник фото'),
+                            actions: [
+                              CupertinoDialogAction(
+                                onPressed: () => Navigator.pop(dialogCtx),
+                                child: const Text('Камера'),
+                              ),
+                              CupertinoDialogAction(
+                                onPressed: () => Navigator.pop(dialogCtx),
+                                child: const Text('Галерея'),
+                              ),
+                              CupertinoDialogAction(
+                                onPressed: () => Navigator.pop(dialogCtx),
+                                isDestructiveAction: true,
+                                child: const Text('Отмена'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.systemGrey5.resolveFrom(context),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.camera_fill,
+                          size: 16,
+                          color: CupertinoColors.systemGrey,
+                        ),
                       ),
                     ),
                   ),
@@ -523,17 +696,94 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            // Name field
-            CupertinoTextField(
-              controller: nameController,
-              placeholder: 'Имя',
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: CupertinoColors.systemGrey6.resolveFrom(context),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              style: const TextStyle(fontSize: 17),
-              autofocus: true,
+            // Fields
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Name field
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Имя',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: CupertinoColors.systemGrey,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    CupertinoTextField(
+                      controller: nameController,
+                      placeholder: 'Ваше имя',
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.systemGrey6.resolveFrom(context),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Callsign field
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Username',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: CupertinoColors.systemGrey,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    CupertinoTextField(
+                      controller: callsignController,
+                      placeholder: 'username',
+                      prefix: const Padding(
+                        padding: EdgeInsets.only(left: 12, right: 4),
+                        child: Text('@', style: TextStyle(fontSize: 16)),
+                      ),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.systemGrey6.resolveFrom(context),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Bio field
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'О себе',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: CupertinoColors.systemGrey,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    CupertinoTextField(
+                      controller: bioController,
+                      placeholder: 'Расскажите о себе',
+                      maxLines: 3,
+                      minLines: 3,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.systemGrey6.resolveFrom(context),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
@@ -604,25 +854,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onPressed: () => Navigator.pop(ctx),
           child: const Text('Отмена'),
         ),
-      ),
-    );
-  }
-
-  void _showInfo(String title) {
-    showCupertinoDialog(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: Text(title),
-        content: const Padding(
-          padding: EdgeInsets.only(top: 16),
-          child: Text('Информация будет добавлена позже.'),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
-          ),
-        ],
       ),
     );
   }

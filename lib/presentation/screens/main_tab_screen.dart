@@ -9,6 +9,236 @@ import '../../domain/entities/user.dart';
 import 'chat_list_screen.dart';
 import 'settings_screen.dart';
 
+/// Screen for creating a new chat with user search
+class NewChatScreen extends StatefulWidget {
+  final RemoteUserRepository userRepository;
+  final Function(String userId) onChatCreated;
+
+  const NewChatScreen({
+    super.key,
+    required this.userRepository,
+    required this.onChatCreated,
+  });
+
+  @override
+  State<NewChatScreen> createState() => _NewChatScreenState();
+}
+
+class _NewChatScreenState extends State<NewChatScreen> {
+  final _searchController = TextEditingController();
+  List<User> _searchResults = [];
+  bool _isSearching = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _searchUsers(String query) async {
+    if (query.trim().isEmpty) {
+      setState(() {
+        _searchResults = [];
+        _errorMessage = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+      _errorMessage = null;
+    });
+
+    final result = await widget.userRepository.searchUsers(query.trim());
+
+    if (!mounted) return;
+
+    result.fold(
+      onSuccess: (users) => setState(() {
+        _searchResults = users;
+        _isSearching = false;
+      }),
+      onFailure: (error) => setState(() {
+        _errorMessage = error.message;
+        _isSearching = false;
+        _searchResults = [];
+      }),
+    );
+  }
+
+  void _selectUser(User user) {
+    widget.onChatCreated(user.id);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text('Новый чат'),
+        leading: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: () => Navigator.pop(context),
+          child: const Icon(CupertinoIcons.xmark),
+        ),
+      ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Search bar
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: CupertinoSearchTextField(
+                controller: _searchController,
+                placeholder: 'Поиск по username или имени',
+                onChanged: _searchUsers,
+                onSubmitted: _searchUsers,
+              ),
+            ),
+            // Results
+            Expanded(
+              child: _buildResults(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResults() {
+    if (_isSearching) {
+      return const Center(child: CupertinoActivityIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              CupertinoIcons.exclamationmark_triangle,
+              size: 48,
+              color: CupertinoColors.systemRed,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage!,
+              style: const TextStyle(color: CupertinoColors.systemGrey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_searchController.text.trim().isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              CupertinoIcons.search,
+              size: 64,
+              color: CupertinoColors.systemGrey3.resolveFrom(context),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Введите username или имя',
+              style: TextStyle(
+                color: CupertinoColors.secondaryLabel.resolveFrom(context),
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_searchResults.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              CupertinoIcons.person_badge_minus,
+              size: 64,
+              color: CupertinoColors.systemGrey3.resolveFrom(context),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Пользователи не найдены',
+              style: TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: _searchResults.length,
+      itemBuilder: (context, index) {
+        final user = _searchResults[index];
+        final displayName = user.displayName ?? user.callsign ?? 'Пользователь';
+        final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+        final isOnline = user.isOnline;
+
+        return CupertinoListTile(
+          onTap: () => _selectUser(user),
+          leading: Stack(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [CupertinoColors.systemBlue, CupertinoColors.systemIndigo],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    firstLetter,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: CupertinoColors.white,
+                    ),
+                  ),
+                ),
+              ),
+              if (isOnline)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.systemGreen,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: CupertinoColors.systemBackground.resolveFrom(context),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          title: Text(displayName, style: const TextStyle(fontWeight: FontWeight.w600)),
+          subtitle: user.callsign != null
+              ? Text('@${user.callsign}', style: const TextStyle(fontSize: 14))
+              : null,
+          trailing: const Icon(CupertinoIcons.chevron_right, size: 18),
+        );
+      },
+    );
+  }
+}
+
 /// Главный экран с табами — Apple стиль
 class MainTabScreen extends StatefulWidget {
   final String currentUserId;
@@ -63,39 +293,12 @@ class _MainTabScreenState extends State<MainTabScreen> {
   }
 
   void _showNewChat(BuildContext context) {
-    final ctrl = TextEditingController();
-    showCupertinoDialog(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Новый чат'),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: CupertinoTextField(controller: ctrl, placeholder: 'Позывной пользователя', prefix: const Padding(padding: EdgeInsets.only(left: 8), child: Text('@'))),
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (_) => NewChatScreen(
+          userRepository: widget.userRepository,
+          onChatCreated: (userId) => _createChat(userId),
         ),
-        actions: [
-          CupertinoDialogAction(isDestructiveAction: true, onPressed: () => Navigator.pop(ctx), child: const Text('Отмена')),
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () async {
-              final username = ctrl.text.trim();
-              if (username.isEmpty) return;
-              Navigator.pop(ctx);
-              final searchResult = await widget.userRepository.searchUsers(username);
-              if (!mounted) return;
-              searchResult.fold(
-                onSuccess: (users) {
-                  if (users.isEmpty) {
-                    _showError('Пользователь не найден');
-                  } else {
-                    _createChat(users.first.id);
-                  }
-                },
-                onFailure: (e) => _showError(e.message),
-              );
-            },
-            child: const Text('Найти'),
-          ),
-        ],
       ),
     );
   }

@@ -106,10 +106,12 @@ class RemoteUserRepository {
   /// Requirements: 7.2 - POST /api/users/me
   Future<Result<User>> updateProfile({
     String? displayName,
+    String? callsign,
     String? bio,
   }) async {
     final request = UpdateProfileRequest(
       displayName: displayName,
+      callsign: callsign,
       bio: bio,
     );
 

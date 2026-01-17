@@ -81,10 +81,12 @@ class UserResponse {
 /// Requirements: 7.2 - POST /api/users/me
 class UpdateProfileRequest {
   final String? displayName;
+  final String? callsign;
   final String? bio;
 
   const UpdateProfileRequest({
     this.displayName,
+    this.callsign,
     this.bio,
   });
 
@@ -92,6 +94,9 @@ class UpdateProfileRequest {
     final json = <String, dynamic>{};
     if (displayName != null) {
       json['displayName'] = displayName;
+    }
+    if (callsign != null) {
+      json['callsign'] = callsign;
     }
     if (bio != null) {
       json['bio'] = bio;
@@ -101,7 +106,7 @@ class UpdateProfileRequest {
 
   @override
   String toString() =>
-      'UpdateProfileRequest(displayName: $displayName, bio: $bio)';
+      'UpdateProfileRequest(displayName: $displayName, callsign: $callsign, bio: $bio)';
 }
 
 /// Request body for updating user avatar
