@@ -69,7 +69,7 @@ class LiveKitService {
         roomOptions: RoomOptions(
           adaptiveStream: true,
           dynacast: true,
-          defaultAudioPublishOptions: const AudioPublishOptions(
+          defaultAudioPublishOptions: AudioPublishOptions(
             audioBitrate: AudioPreset.speech.maxBitrate,
           ),
           defaultVideoPublishOptions: VideoPublishOptions(
