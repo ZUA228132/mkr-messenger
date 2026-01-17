@@ -133,8 +133,12 @@ class _AppLockScreenState extends State<AppLockScreen> {
         setState(() {
           _newPin = enteredPin;
           _isConfirmingPin = true;
-          _enteredPin = [];
         });
+        // Clear after a short delay for UX
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (mounted) {
+          setState(() => _enteredPin = []);
+        }
       } else {
         // Confirming - check if matches
         if (enteredPin == _newPin) {
@@ -146,7 +150,12 @@ class _AppLockScreenState extends State<AppLockScreen> {
           setState(() {
             _isConfirmingPin = false;
             _newPin = null;
-            _enteredPin = [];
+          });
+          // Clear after delay
+          await Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              setState(() => _enteredPin = []);
+            }
           });
         }
       }
@@ -165,11 +174,9 @@ class _AppLockScreenState extends State<AppLockScreen> {
           _blockForTime(30);
         } else {
           // Clear PIN after delay
-          Future.delayed(const Duration(milliseconds: 500), () {
+          await Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) {
-              setState(() {
-                _enteredPin = [];
-              });
+              setState(() => _enteredPin = []);
             }
           });
         }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 
@@ -279,10 +280,44 @@ class ApiClient {
     Options? options,
   }) async {
     try {
+      // Check if file exists before uploading
+      final file = File(filePath);
+      if (!await file.exists()) {
+        developer.log(
+          '✗ File does not exist: $filePath',
+          name: 'ApiClient',
+        );
+        return Failure(ApiError(message: 'File not found: $filePath', endpoint: path));
+      }
+
+      final fileStats = await file.stat();
+      developer.log(
+        'Uploading file: $filePath (${fileStats.size} bytes)',
+        name: 'ApiClient',
+      );
+
       final formData = FormData.fromMap({
-        fieldName: await MultipartFile.fromFile(filePath),
+        fieldName: await MultipartFile.fromFile(
+          filePath,
+          filename: filePath.split('/').last,
+        ),
         ...?additionalFields,
       });
+
+      developer.log(
+        '→ POST $path (multipart/form-data)',
+        name: 'ApiClient',
+      );
+      developer.log(
+        '  Field: $fieldName, File: $filePath',
+        name: 'ApiClient',
+      );
+      if (additionalFields != null) {
+        developer.log(
+          '  Additional fields: $additionalFields',
+          name: 'ApiClient',
+        );
+      }
 
       final response = await _dio.post(
         path,
@@ -291,8 +326,26 @@ class ApiClient {
       );
       return Success(response);
     } on DioException catch (e) {
+      developer.log(
+        '✗ Upload failed: ${e.message}',
+        name: 'ApiClient',
+      );
+      if (e.response != null) {
+        developer.log(
+          '  Status: ${e.response?.statusCode}',
+          name: 'ApiClient',
+        );
+        developer.log(
+          '  Response: ${e.response?.data}',
+          name: 'ApiClient',
+        );
+      }
       return Failure(_transformError(e));
     } catch (e) {
+      developer.log(
+        '✗ Upload error: $e',
+        name: 'ApiClient',
+      );
       return Failure(ApiError.unknown(e, endpoint: path));
     }
   }

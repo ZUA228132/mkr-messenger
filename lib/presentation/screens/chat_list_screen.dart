@@ -104,7 +104,53 @@ class _ChatListScreenState extends State<ChatListScreen>
       (id) => id != widget.currentUserId,
       orElse: () => '',
     );
+    // First try to get from cache, but we'll also use participantNames from chat
     return _userCache[recipientId];
+  }
+
+  /// Get recipient name with multiple fallback sources
+  String _getRecipientName(Chat chat) {
+    if (chat.type != ChatType.direct) return chat.name ?? 'Чат';
+
+    final recipientId = chat.participantIds.firstWhere(
+      (id) => id != widget.currentUserId,
+      orElse: () => '',
+    );
+
+    // Priority 1: User from cache (has most up-to-date info)
+    final cachedUser = _userCache[recipientId];
+    if (cachedUser != null) {
+      if (cachedUser.displayName != null && cachedUser.displayName!.isNotEmpty) {
+        return cachedUser.displayName!;
+      }
+      if (cachedUser.callsign.isNotEmpty) {
+        return cachedUser.callsign;
+      }
+    }
+
+    // Priority 2: participantNames from chat API response
+    final nameFromChat = chat.getParticipantName(recipientId);
+    if (nameFromChat != null && nameFromChat.isNotEmpty) {
+      return nameFromChat;
+    }
+
+    // Priority 3: chat name
+    if (chat.name != null && chat.name!.isNotEmpty) {
+      return chat.name!;
+    }
+
+    // Fallback
+    return 'Пользователь';
+  }
+
+  /// Get online status with fallback
+  bool _getRecipientOnlineStatus(Chat chat) {
+    if (chat.type != ChatType.direct) return false;
+    final recipientId = chat.participantIds.firstWhere(
+      (id) => id != widget.currentUserId,
+      orElse: () => '',
+    );
+    return _userCache[recipientId]?.isOnline ?? false;
   }
 
   @override
@@ -117,35 +163,7 @@ class _ChatListScreenState extends State<ChatListScreen>
             slivers: [
               // Large Title с поддержкой collapse
               CupertinoSliverNavigationBar(
-                largeTitle: Row(
-                  children: [
-                    // MKR Logo
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF6366F1), const Color(0xFF8B5CF6)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'M',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: CupertinoColors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text('Чаты'),
-                  ],
-                ),
+                largeTitle: const Text('Чаты'),
                 trailing: CupertinoButton(
                   padding: EdgeInsets.zero,
                   onPressed: widget.onNewChat,
@@ -304,10 +322,14 @@ class _ChatListScreenState extends State<ChatListScreen>
         (context, index) {
           final chat = widget.chats[index];
           final recipientUser = _getRecipientUser(chat);
+          final recipientName = _getRecipientName(chat);
+          final isOnline = _getRecipientOnlineStatus(chat);
           return _ChatTile(
             chat: chat,
             currentUserId: widget.currentUserId,
             recipientUser: recipientUser,
+            recipientName: recipientName,
+            isOnline: isOnline,
             onTap: () => widget.onChatTap?.call(chat),
           );
         },
@@ -321,33 +343,24 @@ class _ChatTile extends StatelessWidget {
   final Chat chat;
   final String currentUserId;
   final User? recipientUser;
+  final String recipientName;
+  final bool isOnline;
   final VoidCallback? onTap;
 
   const _ChatTile({
     required this.chat,
     required this.currentUserId,
     this.recipientUser,
+    required this.recipientName,
+    this.isOnline = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Use recipient user info for direct chats, or chat name for groups
-    String name;
-    if (chat.type == ChatType.direct && recipientUser != null) {
-      name = recipientUser!.displayName ?? recipientUser!.callsign ?? 'Пользователь';
-    } else if (chat.name != null && chat.name!.isNotEmpty) {
-      name = chat.name!;
-    } else if (chat.type == ChatType.direct) {
-      // Fallback - show loading or generic name
-      name = 'Загрузка...';
-    } else {
-      name = 'Чат';
-    }
-
     final preview = chat.lastMessage == null ? 'Нет сообщений' : _preview(chat.lastMessage!);
     final time = chat.lastMessage?.timestamp != null ? _time(chat.lastMessage!.timestamp) : '';
-    final isOnline = recipientUser?.isOnline ?? false;
+    final firstLetter = recipientName.isNotEmpty ? recipientName[0].toUpperCase() : '?';
 
     return CupertinoListTile(
       onTap: onTap,
@@ -365,7 +378,7 @@ class _ChatTile extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                firstLetter,
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: CupertinoColors.white),
               ),
             ),
@@ -389,7 +402,7 @@ class _ChatTile extends StatelessWidget {
             ),
         ],
       ),
-      title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+      title: Text(recipientName, style: const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: Text(preview, maxLines: 1, overflow: TextOverflow.ellipsis),
       additionalInfo: Column(
         crossAxisAlignment: CrossAxisAlignment.end,

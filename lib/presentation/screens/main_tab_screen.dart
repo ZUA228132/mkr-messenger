@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,6 +10,7 @@ import '../../domain/entities/chat.dart';
 import '../../domain/entities/user.dart';
 import 'chat_list_screen.dart';
 import 'settings_screen.dart';
+import 'app_lock_screen.dart';
 
 /// Screen for creating a new chat with user search
 class NewChatScreen extends StatefulWidget {
@@ -260,16 +263,63 @@ class MainTabScreen extends StatefulWidget {
   State<MainTabScreen> createState() => _MainTabScreenState();
 }
 
-class _MainTabScreenState extends State<MainTabScreen> {
+class _MainTabScreenState extends State<MainTabScreen>
+    with WidgetsBindingObserver {
   List<Chat> _chats = [];
   User? _currentUser;
   bool _isLoading = false;
   String? _errorMessage;
+  Timer? _autoLockTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _startAutoLockTimer();
     _loadData();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // Reset timer when app becomes active
+    if (state == AppLifecycleState.resumed) {
+      _resetAutoLockTimer();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _autoLockTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Reset auto-lock timer (call when user performs any action)
+  void _resetAutoLockTimer() {
+    _autoLockTimer?.cancel();
+    // Start 7 minute timer for auto-lock
+    _autoLockTimer = Timer(const Duration(minutes: 7), () {
+      // Show lock screen
+      if (mounted) {
+        Navigator.of(context).push(
+          CupertinoPageRoute(
+            builder: (_) => AppLockScreen(
+              onUnlocked: () {
+                // User unlocked, refresh data if needed
+                _loadCurrentUser();
+                _resetAutoLockTimer();
+              },
+            ),
+          ),
+        );
+      }
+    });
+  }
+
+  void _startAutoLockTimer() {
+    _resetAutoLockTimer();
   }
 
   Future<void> _loadData() async {
@@ -370,6 +420,42 @@ class _MainTabScreenState extends State<MainTabScreen> {
 class _SecurityTab extends StatelessWidget {
   const _SecurityTab();
 
+  void _showLockAppDialog(BuildContext context) {
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Заблокировать мессенджер'),
+        content: const Text('У вас уже установлен PIN-код. Хотите заблокировать мессенджер?'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () {
+              Navigator.pop(ctx);
+              _showLockScreen(context);
+            },
+            child: const Text('Заблокировать'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLockScreen(BuildContext context) {
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (_) => AppLockScreen(
+          onUnlocked: () {
+            // User unlocked, refresh data if needed
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
@@ -399,6 +485,13 @@ class _SecurityTab extends StatelessWidget {
                   subtitle: const Text('Скрыть под калькулятор'),
                   trailing: const CupertinoListTileChevron(),
                   onTap: () => context.push('/stealth'),
+                ),
+                CupertinoListTile(
+                  leading: _icon(CupertinoIcons.lock_fill, CupertinoColors.systemOrange),
+                  title: const Text('Заблокировать мессенджер'),
+                  subtitle: const Text('PIN-код или Face ID'),
+                  trailing: const CupertinoListTileChevron(),
+                  onTap: () => _showLockAppDialog(context),
                 ),
               ],
             ),

@@ -183,57 +183,103 @@ class RemoteMessageRepository {
   }
 
   /// Send media message (image or video)
+  ///
+  /// Process:
+  /// 1. Upload file to /api/files/upload
+  /// 2. Send message with uploaded file URL as content
   Future<Result<Message>> sendMediaMessage({
     required String chatId,
     required String filePath,
     required String mediaType, // 'IMAGE' or 'VIDEO'
   }) async {
     developer.log(
-      'Sending media message to chat: $chatId (type: $mediaType)',
+      'Sending media message to chat: $chatId (type: $mediaType, file: $filePath)',
       name: 'RemoteMessageRepository',
     );
 
-    final result = await _apiClient.uploadFile(
-      '/api/messages/$chatId/media',
-      filePath: filePath,
-      fieldName: 'media',
-      additionalFields: {'type': mediaType},
-    );
+    try {
+      // Step 1: Upload file
+      final uploadResult = await _apiClient.uploadFile(
+        '/api/files/upload',
+        filePath: filePath,
+        fieldName: 'file',
+      );
 
-    return result.fold(
-      onSuccess: (response) {
-        try {
-          developer.log(
-            'Send media message response: ${response.data}',
-            name: 'RemoteMessageRepository',
-          );
-          final messageResponse = MessageResponse.fromJson(
-            response.data as Map<String, dynamic>,
-          );
-          final message = messageResponse.toEntity();
+      return uploadResult.fold(
+        onSuccess: (uploadResponse) async {
+          // Step 2: Send message with file URL
+          final fileUrl = uploadResponse.data['url'] as String;
 
-          developer.log(
-            'Media message sent successfully: ${message.id}',
-            name: 'RemoteMessageRepository',
+          // Determine message type based on media type
+          final messageType = mediaType == 'IMAGE' ? 'IMAGE' : 'VIDEO';
+
+          final request = SendMessageRequest.fromContent(
+            chatId: chatId,
+            content: fileUrl,
+            type: messageType,
           );
 
-          return Success(message);
-        } catch (e) {
           developer.log(
-            'Failed to parse send media message response: $e',
+            'File uploaded successfully: $fileUrl',
             name: 'RemoteMessageRepository',
           );
-          return Failure(ApiError(message: 'Failed to parse message: $e'));
-        }
-      },
-      onFailure: (apiError) {
-        developer.log(
-          'Failed to send media message: ${apiError.message}',
-          name: 'RemoteMessageRepository',
-        );
-        return Failure(apiError);
-      },
-    );
+
+          // Send message with file URL
+          final sendMessageResult = await _apiClient.post(
+            '/api/messages',
+            data: request.toJson(),
+          );
+
+          return sendMessageResult.fold(
+            onSuccess: (response) {
+              try {
+                developer.log(
+                  'Send message response: ${response.data}',
+                  name: 'RemoteMessageRepository',
+                );
+                final messageResponse = MessageResponse.fromJson(
+                  response.data as Map<String, dynamic>,
+                );
+                final message = messageResponse.toEntity();
+
+                developer.log(
+                  'Media message sent successfully: ${message.id}, content: ${message.content}',
+                  name: 'RemoteMessageRepository',
+                );
+
+                return Success(message);
+              } catch (e) {
+                developer.log(
+                  'Failed to parse send message response: $e',
+                  name: 'RemoteMessageRepository',
+                );
+                return Failure(ApiError(message: 'Failed to parse message: $e'));
+              }
+            },
+            onFailure: (apiError) {
+              developer.log(
+                'Failed to send message with file URL: ${apiError.message}',
+                name: 'RemoteMessageRepository',
+              );
+              return Failure(apiError);
+            },
+          );
+        },
+        onFailure: (uploadError) {
+          developer.log(
+            'Failed to upload file: ${uploadError.message}',
+            name: 'RemoteMessageRepository',
+          );
+          return Failure(uploadError);
+        },
+      );
+    } catch (e) {
+      developer.log(
+        'Exception during media send: $e',
+        name: 'RemoteMessageRepository',
+      );
+      return Failure(ApiError(message: 'Failed to send media: $e'));
+    }
   }
 
   /// Mark messages as read

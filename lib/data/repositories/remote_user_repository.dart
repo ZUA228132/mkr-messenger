@@ -221,20 +221,27 @@ class RemoteUserRepository {
     return result.fold(
       onSuccess: (response) {
         try {
-          final userResponse = UserResponse.fromJson(
-            response.data as Map<String, dynamic>,
+          developer.log(
+            'Upload avatar response: ${response.data}',
+            name: 'RemoteUserRepository',
           );
+
+          // Handle different response formats
+          final data = response.data as Map<String, dynamic>;
+          final responseData = data['data'] as Map<String, dynamic>? ?? data;
+
+          final userResponse = UserResponse.fromJson(responseData);
           final user = userResponse.toEntity();
 
           developer.log(
-            'Avatar uploaded successfully: ${user.id}',
+            'Avatar uploaded successfully: ${user.id}, avatarUrl: ${user.avatarUrl}',
             name: 'RemoteUserRepository',
           );
 
           return Success(user);
         } catch (e) {
           developer.log(
-            'Failed to parse upload avatar response: $e',
+            'Failed to parse upload avatar response: $e\nResponse was: ${response.data}',
             name: 'RemoteUserRepository',
           );
           return Failure(ApiError(message: 'Failed to parse user: $e'));
@@ -242,7 +249,7 @@ class RemoteUserRepository {
       },
       onFailure: (apiError) {
         developer.log(
-          'Failed to upload avatar: ${apiError.message}',
+          'Failed to upload avatar: ${apiError.message} (code: ${apiError.statusCode})',
           name: 'RemoteUserRepository',
         );
         return Failure(apiError);
