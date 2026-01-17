@@ -54,14 +54,13 @@ class LiveKitService {
       // Create room
       _room = Room();
       
-      // Listen to room events
-      _room!.addListener(_RoomListener(
-        onConnected: _onRoomConnected,
-        onDisconnected: _onRoomDisconnected,
-        onParticipantConnectedCallback: _onParticipantConnected,
-        onParticipantDisconnectedCallback: _onParticipantDisconnected,
-        onTrackSubscribedCallback: _onTrackSubscribed,
-      ));
+      // Listen to room events using EventsListener
+      _room!.createListener()
+        ..on<RoomConnectedEvent>((event) => _onRoomConnected())
+        ..on<RoomDisconnectedEvent>((event) => _onRoomDisconnected())
+        ..on<ParticipantConnectedEvent>((event) => _onParticipantConnected(event.participant))
+        ..on<ParticipantDisconnectedEvent>((event) => _onParticipantDisconnected(event.participant))
+        ..on<TrackSubscribedEvent>((event) => _onTrackSubscribed(event.publication, event.participant));
       
       // Connect to room
       await _room!.connect(
@@ -196,44 +195,6 @@ class LiveKitService {
     _callStateController.close();
     _remoteParticipantController.close();
   }
-}
-
-/// Room event listener
-class _RoomListener extends RoomListener {
-  final VoidCallback onConnected;
-  final VoidCallback onDisconnected;
-  final void Function(RemoteParticipant) onParticipantConnectedCallback;
-  final void Function(RemoteParticipant) onParticipantDisconnectedCallback;
-  final void Function(RemoteTrackPublication, RemoteParticipant) onTrackSubscribedCallback;
-  
-  _RoomListener({
-    required this.onConnected,
-    required this.onDisconnected,
-    required this.onParticipantConnectedCallback,
-    required this.onParticipantDisconnectedCallback,
-    required this.onTrackSubscribedCallback,
-  });
-  
-  @override
-  void onRoomConnected() => onConnected();
-  
-  @override
-  void onRoomDisconnected({DisconnectReason? reason}) => onDisconnected();
-  
-  @override
-  void onParticipantConnected(RemoteParticipant participant) => 
-      onParticipantConnectedCallback(participant);
-  
-  @override
-  void onParticipantDisconnected(RemoteParticipant participant) => 
-      onParticipantDisconnectedCallback(participant);
-  
-  @override
-  void onTrackSubscribed(
-    RemoteTrackPublication publication,
-    RemoteParticipant participant,
-    Track track,
-  ) => onTrackSubscribedCallback(publication, participant);
 }
 
 typedef VoidCallback = void Function();
