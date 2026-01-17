@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/scheduler.dart';
 
 import '../../data/repositories/remote_user_repository.dart';
 import '../../domain/entities/chat.dart';
@@ -93,7 +92,7 @@ class _ChatListScreenState extends State<ChatListScreen>
       final result = await widget.userRepository!.getUser(userId);
       if (!mounted) return;
       result.fold(
-        onSuccess: (user) => setState(() => _userCache[userId] = user)),
+        onSuccess: (user) => setState(() => _userCache[userId] = user),
         onFailure: (_) {},
       );
     }
@@ -254,12 +253,12 @@ class _ChatListScreenState extends State<ChatListScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(CupertinoIcons.exclamationmark_triangle, size: 48, color: CoronaColor(0xFF8B5CF6)),
+                const Icon(CupertinoIcons.exclamationmark_triangle, size: 48, color: CupertinoColors.systemRed),
                 const SizedBox(height: 16),
                 Text('Не удалось загрузить', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
-                Text(widget.errorMessage!, style: TextStyle(color: CupertinoColors.systemGrey), textAlign: TextAlign.center),
-                const SizedBox(height: ),
+                Text(widget.errorMessage ?? 'Ошибка', style: TextStyle(color: CupertinoColors.systemGrey), textAlign: TextAlign.center),
+                const SizedBox(height: 24),
                 CupertinoButton.filled(onPressed: widget.onRefresh, child: const Text('Повторить')),
               ],
             ),
@@ -347,7 +346,7 @@ class _ChatTile extends StatelessWidget {
     }
 
     final preview = chat.lastMessage == null ? 'Нет сообщений' : _preview(chat.lastMessage!);
-    final time = chat.lastMessage != null ? _time(chat.lastMessage.timestamp) : '';
+    final time = chat.lastMessage?.timestamp != null ? _time(chat.lastMessage!.timestamp) : '';
     final isOnline = recipientUser?.isOnline ?? false;
 
     return CupertinoListTile(
