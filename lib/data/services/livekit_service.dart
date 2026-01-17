@@ -58,9 +58,9 @@ class LiveKitService {
       _room!.addListener(_RoomListener(
         onConnected: _onRoomConnected,
         onDisconnected: _onRoomDisconnected,
-        onParticipantConnected: _onParticipantConnected,
-        onParticipantDisconnected: _onParticipantDisconnected,
-        onTrackSubscribed: _onTrackSubscribed,
+        onParticipantConnectedCallback: _onParticipantConnected,
+        onParticipantDisconnectedCallback: _onParticipantDisconnected,
+        onTrackSubscribedCallback: _onTrackSubscribed,
       ));
       
       // Connect to room
@@ -202,16 +202,16 @@ class LiveKitService {
 class _RoomListener extends RoomListener {
   final VoidCallback onConnected;
   final VoidCallback onDisconnected;
-  final void Function(RemoteParticipant) onParticipantConnected;
-  final void Function(RemoteParticipant) onParticipantDisconnected;
-  final void Function(RemoteTrackPublication, RemoteParticipant) onTrackSubscribed;
+  final void Function(RemoteParticipant) onParticipantConnectedCallback;
+  final void Function(RemoteParticipant) onParticipantDisconnectedCallback;
+  final void Function(RemoteTrackPublication, RemoteParticipant) onTrackSubscribedCallback;
   
   _RoomListener({
     required this.onConnected,
     required this.onDisconnected,
-    required this.onParticipantConnected,
-    required this.onParticipantDisconnected,
-    required this.onTrackSubscribed,
+    required this.onParticipantConnectedCallback,
+    required this.onParticipantDisconnectedCallback,
+    required this.onTrackSubscribedCallback,
   });
   
   @override
@@ -222,18 +222,18 @@ class _RoomListener extends RoomListener {
   
   @override
   void onParticipantConnected(RemoteParticipant participant) => 
-      this.onParticipantConnected(participant);
+      onParticipantConnectedCallback(participant);
   
   @override
   void onParticipantDisconnected(RemoteParticipant participant) => 
-      this.onParticipantDisconnected(participant);
+      onParticipantDisconnectedCallback(participant);
   
   @override
   void onTrackSubscribed(
     RemoteTrackPublication publication,
     RemoteParticipant participant,
     Track track,
-  ) => onTrackSubscribed(publication, participant);
+  ) => onTrackSubscribedCallback(publication, participant);
 }
 
 typedef VoidCallback = void Function();
