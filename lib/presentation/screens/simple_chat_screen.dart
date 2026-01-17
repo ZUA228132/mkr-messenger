@@ -667,16 +667,22 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     String displayName;
     if (_recipientUser?.displayName != null && _recipientUser!.displayName!.isNotEmpty) {
       displayName = _recipientUser!.displayName!;
+      print('ChatScreen: Using displayName from user: $displayName');
     } else if (_recipientUser?.callsign != null && _recipientUser!.callsign!.isNotEmpty) {
       displayName = _recipientUser!.callsign!;
+      print('ChatScreen: Using callsign from user: $displayName');
     } else if (_recipientUserId != null && _chat?.getParticipantName(_recipientUserId!) != null) {
       displayName = _chat!.getParticipantName(_recipientUserId!)!;
+      print('ChatScreen: Using name from chat participantNames: $displayName');
     } else if (_chat?.name != null && _chat!.name!.isNotEmpty) {
       displayName = _chat!.name!;
+      print('ChatScreen: Using chat name: $displayName');
     } else if (_isLoading) {
       displayName = 'Загрузка...';
+      print('ChatScreen: Loading...');
     } else {
       displayName = 'Чат';
+      print('ChatScreen: Fallback to "Чат"');
     }
     final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
     
@@ -1270,28 +1276,28 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
                     ),
             ),
           ] else ...[
-            // Voice note button only (removed video circles)
+            // Voice note button with long press support
             GestureDetector(
               onLongPressStart: (_) => _startVoiceRecording(),
               onLongPressEnd: (_) => _stopRecording(),
-              child: CupertinoButton(
+              onTap: () {
+                // Short tap shows hint
+                showCupertinoDialog(
+                  context: context,
+                  builder: (ctx) => CupertinoAlertDialog(
+                    title: const Text('Голосовое сообщение'),
+                    content: const Text('Удерживайте кнопку для записи'),
+                    actions: [
+                      CupertinoDialogAction(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              child: Container(
                 padding: const EdgeInsets.all(8),
-                onPressed: () {
-                  // Short tap shows hint
-                  showCupertinoDialog(
-                    context: context,
-                    builder: (ctx) => CupertinoAlertDialog(
-                      title: const Text('Голосовое сообщение'),
-                      content: const Text('Удерживайте кнопку для записи'),
-                      actions: [
-                        CupertinoDialogAction(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
                 child: const Icon(
                   CupertinoIcons.mic_fill,
                   size: 24,

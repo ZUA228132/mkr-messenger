@@ -916,6 +916,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _updateProfileData(String newName, String newCallsign, String newBio) async {
+    print('Updating profile: displayName=$newName, callsign=$newCallsign, bio=$newBio');
+
     final result = await widget.userRepository!.updateProfile(
       displayName: newName,
       callsign: newCallsign,
@@ -926,6 +928,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     result.fold(
       onSuccess: (updatedUser) {
+        print('Profile updated successfully: id=${updatedUser.id}, displayName=${updatedUser.displayName}, callsign=${updatedUser.callsign}');
         setState(() {
           _loadedUser = updatedUser;
           _displayName = newName;
@@ -937,6 +940,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         widget.onProfileUpdated?.call();
       },
       onFailure: (error) {
+        print('Failed to update profile: ${error.message}');
         setState(() => _isSaving = false);
         _showError(error.message);
       },

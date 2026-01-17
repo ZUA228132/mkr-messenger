@@ -277,6 +277,27 @@ class _MainTabScreenState extends State<MainTabScreen>
     WidgetsBinding.instance.addObserver(this);
     _startAutoLockTimer();
     _loadData();
+    _checkAndShowLockScreen();
+  }
+
+  Future<void> _checkAndShowLockScreen() async {
+    // Check if app lock is enabled
+    final isEnabled = await AppLockService.isLockEnabled();
+    if (!mounted) return;
+
+    if (isEnabled) {
+      // Show lock screen immediately
+      Navigator.of(context).push(
+        CupertinoPageRoute(
+          builder: (_) => AppLockScreen(
+            onUnlocked: () {
+              // User unlocked, refresh data if needed
+              _loadCurrentUser();
+            },
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -354,11 +375,19 @@ class _MainTabScreenState extends State<MainTabScreen>
   }
 
   Future<void> _createChat(String userId) async {
+    print('Creating chat with user: $userId');
     final result = await widget.chatRepository.getOrCreateDirectChat(userId);
     if (!mounted) return;
     result.fold(
-      onSuccess: (chat) { context.push('/chat/${chat.id}'); _loadChats(); },
-      onFailure: (e) => _showError(e.message),
+      onSuccess: (chat) {
+        print('Chat created successfully: ${chat.id}');
+        context.push('/chat/${chat.id}');
+        _loadChats();
+      },
+      onFailure: (e) {
+        print('Failed to create chat: ${e.message}');
+        _showError(e.message);
+      },
     );
   }
 
