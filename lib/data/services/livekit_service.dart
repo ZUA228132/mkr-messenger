@@ -70,7 +70,7 @@ class LiveKitService {
           adaptiveStream: true,
           dynacast: true,
           defaultAudioPublishOptions: AudioPublishOptions(
-            audioBitrate: AudioPreset.speech.maxBitrate,
+            audioBitrate: 64000, // 64 kbps for speech
           ),
           defaultVideoPublishOptions: VideoPublishOptions(
             videoEncoding: VideoParametersPresets.h720_169.encoding,
