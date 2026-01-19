@@ -1136,12 +1136,18 @@ class ChatViewModel @Inject constructor(
                 val mediaDir = File(context.filesDir, "files")
                 if (!mediaDir.exists()) mediaDir.mkdirs()
                 
-                // Получаем имя файла
-                val fileName = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                // Получаем имя файла и MIME тип
+                var fileName = "file"
+                var mimeType = "application/octet-stream"
+                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
                     val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    val sizeIndex = cursor.getColumnIndex(android.provider.OpenableColumns.SIZE)
                     cursor.moveToFirst()
-                    if (nameIndex >= 0) cursor.getString(nameIndex) else null
-                } ?: "file"
+                    if (nameIndex >= 0) fileName = cursor.getString(nameIndex) ?: "file"
+                }
+                
+                // Получаем MIME тип
+                mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream"
                 
                 val messageId = "local_file_${System.currentTimeMillis()}_${(0..9999).random()}"
                 val savedFile = File(mediaDir, "${messageId}_$fileName")
@@ -1169,9 +1175,45 @@ class ChatViewModel @Inject constructor(
                     localFilePath = savedFile.absolutePath
                 ))
                 
-                // TODO: Загрузка файла на сервер
-                // Пока просто помечаем как отправленное локально
-                messageDao.updateMessageStatus(messageId, "SENT")
+                // Загрузка файла на сервер
+                val fileBytes = savedFile.readBytes()
+                val uploadResult = com.pioneer.messenger.data.network.ApiClient.uploadFile(
+                    fileBytes, 
+                    fileName,
+                    mimeType
+                )
+                
+                uploadResult.onSuccess { response ->
+                    // Обновляем сообщение с URL файла
+                    messageDao.updateMessage(MessageEntity(
+                        id = messageId,
+                        chatId = chatId,
+                        senderId = currentUser.id,
+                        encryptedContent = response.url,
+                        nonce = messageId,
+                        timestamp = System.currentTimeMillis(),
+                        type = "FILE",
+                        status = "SENT",
+                        replyToId = null,
+                        isEdited = false,
+                        editedAt = null,
+                        fileName = fileName,
+                        fileSize = savedFile.length(),
+                        localFilePath = savedFile.absolutePath
+                    ))
+                    
+                    // Отправляем через WebSocket
+                    wsClient?.sendMessage(
+                        chatId = chatId,
+                        content = response.url,
+                        type = "FILE",
+                        fileName = fileName,
+                        fileSize = savedFile.length()
+                    )
+                }.onFailure { error ->
+                    messageDao.updateMessageStatus(messageId, "FAILED")
+                    error.printStackTrace()
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }

@@ -110,6 +110,26 @@ class WebSocketClient(
         send("call_ice", """{"targetUserId":"$targetUserId","candidate":"$candidate"}""")
     }
     
+    fun sendMessage(
+        chatId: String, 
+        content: String, 
+        type: String = "TEXT",
+        fileName: String? = null,
+        fileSize: Long? = null
+    ) {
+        val payload = buildString {
+            append("""{"chatId":"$chatId","content":"$content","type":"$type"""")
+            if (fileName != null) {
+                append(""","fileName":"$fileName"""")
+            }
+            if (fileSize != null) {
+                append(""","fileSize":$fileSize""")
+            }
+            append("}")
+        }
+        send("message", payload)
+    }
+    
     fun disconnect() {
         webSocket?.close(1000, "User disconnected")
         webSocket = null
