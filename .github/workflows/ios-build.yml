@@ -43,49 +43,13 @@ jobs:
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: MKR-Messenger-iOS-Flutter
+          name: MKR-Messenger-iOS
           path: mkr_flutter/MKR-Messenger-unsigned.ipa
-
-  build-deltachat-ios:
-    runs-on: macos-15
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: true
-          show-progress: false
-
-      - name: Switch Xcode version
-        run: sudo xcode-select --switch /Applications/Xcode_16.2/Contents/Developer
-
-      - name: Install Rust toolchain for iOS
-        run: cargo install cargo-lipo
-
-      - name: Install CocoaPods dependencies
-        working-directory: deltachat-ios-main
-        run: pod install
-
-      - name: Download iOS platforms
-        run: xcodebuild -downloadPlatform iOS
-
-      - name: Build MKR for iOS Simulator
-        working-directory: deltachat-ios-main
-        run: |
-          set -o pipefail
-          xcodebuild \
-            -workspace deltachat-ios.xcworkspace \
-            -scheme deltachat-ios \
-            -destination "platform=iOS Simulator,name=iPhone 16,OS=18.2" \
-            -configuration Debug \
-            PRODUCT_BUNDLE_IDENTIFIER=com.mkr.su \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            build | xcbeautify --renderer github-actions || true
-
+      
       - name: Create Build Summary
         run: |
           echo "## MKR iOS Build Complete :white_check_mark:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Flutter Version**: Built successfully" >> $GITHUB_STEP_SUMMARY
-          echo "- **DeltaChat Version**: Built for simulator" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platform**: iOS (unsigned)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Flutter Version**: 3.24.5" >> $GITHUB_STEP_SUMMARY
+          echo "- **Artifact**: MKR-Messenger-unsigned.ipa" >> $GITHUB_STEP_SUMMARY
