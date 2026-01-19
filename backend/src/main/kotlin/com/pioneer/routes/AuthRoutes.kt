@@ -815,9 +815,9 @@ fun Route.authRoutes() {
         post("/register/simple") {
             val request = call.receive<SimpleRegisterRequest>()
             
-            // Валидация позывного
-            if (request.callsign.length < 3 || !request.callsign.matches(Regex("^[a-zA-Z0-9_]+$"))) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Позывной должен быть минимум 3 символа (только буквы, цифры и _)"))
+            // Валидация позывного (латиница, кириллица, цифры, подчеркивание)
+            if (request.callsign.length < 3 || !request.callsign.matches(Regex("^[a-zA-Zа-яА-ЯёЁ0-9_]+$"))) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Позывной должен быть минимум 3 символа (буквы, цифры и _)"))
                 return@post
             }
             

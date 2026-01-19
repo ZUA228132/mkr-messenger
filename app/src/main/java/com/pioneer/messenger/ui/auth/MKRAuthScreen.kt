@@ -125,9 +125,20 @@ fun MKRAuthScreen(
                         onValueChange = { input ->
                             // Если содержит @, это email - разрешаем все символы email
                             callsign = if (input.contains("@") || isLogin) {
-                                input.lowercase().filter { c -> c.isLetterOrDigit() || c in "@._-" }
+                                input.lowercase().filter { c -> 
+                                    c.isLetterOrDigit() || 
+                                    c in "@._-" ||
+                                    c in 'а'..'я' ||
+                                    c == 'ё'
+                                }
                             } else {
-                                input.lowercase().filter { c -> c.isLetterOrDigit() || c == '_' }
+                                // Для позывного: латиница, кириллица, цифры, подчеркивание
+                                input.lowercase().filter { c -> 
+                                    c.isLetterOrDigit() || 
+                                    c == '_' ||
+                                    c in 'а'..'я' ||
+                                    c == 'ё'
+                                }
                             }
                         },
                         label = if (isLogin) "Позывной или Email" else "Позывной",
