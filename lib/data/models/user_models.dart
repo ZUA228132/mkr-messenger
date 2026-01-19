@@ -136,7 +136,7 @@ class UpdateFcmTokenRequest {
 
   const UpdateFcmTokenRequest({
     required this.token,
-    this.platform = 'ios',
+    required this.platform,
   });
 
   Map<String, dynamic> toJson() {

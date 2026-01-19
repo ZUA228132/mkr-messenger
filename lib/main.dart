@@ -1,5 +1,8 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show DefaultMaterialLocalizations;
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -59,6 +62,7 @@ class _MKRAppState extends State<MKRApp> {
   void initState() {
     super.initState();
     _initializeServices();
+    _setupIosMethodChannels();
   }
 
   void _initializeServices() {
@@ -89,6 +93,81 @@ class _MKRAppState extends State<MKRApp> {
     // Initialize token from storage on app start
     _initializeAuthFromStorage();
   }
+
+  /// Set up method channels for iOS push notifications and calls
+  void _setupIosMethodChannels() {
+    if (!Platform.isIOS) return;
+
+    const methodChannel = MethodChannel('com.mkr.messenger/push_notification');
+
+    methodChannel.setMethodCallHandler((call) async {
+      print('iOS Method Call: ${call.method}');
+
+      switch (call.method) {
+        case 'onIncomingCall':
+          _handleIosIncomingCall(call.arguments);
+          break;
+
+        case 'onFCMTokenReceived':
+          await _handleIosFCMTokenReceived(call.arguments);
+          break;
+
+        case 'onAPNsTokenReceived':
+          await _handleIosAPNsTokenReceived(call.arguments);
+          break;
+
+        case 'onCallAnswered':
+          print('Call answered via CallKit');
+          break;
+
+        case 'onCallEnded':
+          print('Call ended via CallKit');
+          break;
+
+        default:
+          print('Unknown iOS method call: ${call.method}');
+      }
+    });
+
+    print('iOS method channels set up successfully');
+  }
+
+  /// Handle incoming call from iOS CallKit
+  void _handleIosIncomingCall(dynamic arguments) {
+    if (arguments is! Map<String, dynamic>) return;
+
+    final callerId = arguments['callerId'] as String?;
+    final callerName = arguments['callerName'] as String?;
+    final isVideo = arguments['isVideo'] as bool? ?? false;
+    final roomId = arguments['roomId'] as String?;
+
+    print('Incoming call from iOS: $callerName ($callerId), video: $isVideo, room: $roomId');
+
+    // TODO: Navigate to call screen or show incoming call UI
+    // For now, just log the incoming call
+  }
+
+  /// Handle FCM token received from iOS
+  Future<void> _handleIosFCMTokenReceived(dynamic arguments) async {
+    if (arguments is! Map<String, dynamic>) return;
+
+    final token = arguments['token'] as String?;
+    if (token != null && token.isNotEmpty) {
+      print('FCM Token received from iOS: ${token.substring(0, 20)}...');
+      await _sendFcmTokenToBackend();
+    }
+  }
+
+  /// Handle APNs token received from iOS
+  Future<void> _handleIosAPNsTokenReceived(dynamic arguments) async {
+    if (arguments is! Map<String, dynamic>) return;
+
+    final token = arguments['token'] as String?;
+    if (token != null && token.isNotEmpty) {
+      print('APNs Token received from iOS: ${token.substring(0, 20)}...');
+      // APNs token is automatically mapped to FCM by Firebase
+    }
+  }
   
   Future<void> _initializeAuthFromStorage() async {
     final token = await _storage.getToken();
@@ -97,15 +176,45 @@ class _MKRAppState extends State<MKRApp> {
       _apiClient.setAuthToken(token);
       setState(() => _currentUserId = userId);
       await _webSocketService.connect(userId);
+      // Send FCM token to backend after restoring session
+      await _sendFcmTokenToBackend();
     }
   }
 
   Future<void> _handleAuthenticated(String userId) async {
     setState(() => _currentUserId = userId);
-    
+
     // Connect WebSocket after authentication
     // Requirements: 6.1 - Establish WebSocket connection
     await _webSocketService.connect(userId);
+
+    // Send FCM token to backend after login
+    await _sendFcmTokenToBackend();
+  }
+
+  /// Send FCM/APNs token to backend for push notifications
+  Future<void> _sendFcmTokenToBackend() async {
+    try {
+      final pushService = PushNotificationService();
+      final fcmToken = pushService.fcmToken;
+
+      if (fcmToken != null && fcmToken.isNotEmpty) {
+        print('Sending ${Platform.isAndroid ? 'FCM' : 'APNs'} token to backend: ${fcmToken.substring(0, 20)}...');
+        final result = await _userRepository.updateFcmToken(fcmToken);
+        result.fold(
+          onSuccess: (_) {
+            print('${Platform.isAndroid ? 'FCM' : 'APNs'} token sent to backend successfully');
+          },
+          onFailure: (error) {
+            print('Failed to send ${Platform.isAndroid ? 'FCM' : 'APNs'} token: ${error.message}');
+          },
+        );
+      } else {
+        print('No ${Platform.isAndroid ? 'FCM' : 'APNs'} token available yet');
+      }
+    } catch (e) {
+      print('Error sending ${Platform.isAndroid ? 'FCM' : 'APNs'} token: $e');
+    }
   }
 
   Future<void> _handleLogout() async {

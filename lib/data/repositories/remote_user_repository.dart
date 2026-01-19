@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'dart:io' show Platform;
 
 import '../../core/error/api_error.dart';
 import '../../core/result/result.dart';
@@ -304,13 +305,16 @@ class RemoteUserRepository {
   /// Update FCM token for push notifications
   /// Requirements: 9.2 - POST /api/users/fcm-token
   Future<Result<void>> updateFcmToken(String token) async {
+    // Automatically detect platform
+    final platform = Platform.isAndroid ? 'android' : 'ios';
+
     final request = UpdateFcmTokenRequest(
       token: token,
-      platform: 'ios',
+      platform: platform,
     );
 
     developer.log(
-      'Updating FCM token',
+      'Updating FCM token for platform: $platform',
       name: 'RemoteUserRepository',
     );
 
@@ -322,7 +326,7 @@ class RemoteUserRepository {
     return result.fold(
       onSuccess: (_) {
         developer.log(
-          'FCM token updated successfully',
+          'FCM token updated successfully for $platform',
           name: 'RemoteUserRepository',
         );
         return const Success(null);

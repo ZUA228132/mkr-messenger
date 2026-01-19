@@ -50,11 +50,10 @@ dependencies:
   image_picker: ^1.0.7
   file_picker: ^8.0.0+1
 
-  # Push Notifications (APNs for iOS)
+  # Push Notifications (APNs for iOS, FCM for Android)
   # Requirements: 8.4 - Use APNs for push notifications
-  # TODO: Re-enable after fixing iOS modular headers issue
-  # firebase_core: ^3.3.0
-  # firebase_messaging: ^15.0.4
+  firebase_core: ^3.3.0
+  firebase_messaging: ^15.0.4
 
   # JSON Serialization
   json_annotation: ^4.8.1

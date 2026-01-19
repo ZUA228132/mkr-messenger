@@ -2,9 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../data/repositories/remote_user_repository.dart';
+import '../../data/services/app_update_service.dart';
 import '../../domain/entities/user.dart';
 import 'app_lock_screen.dart';
 import 'legal_screen.dart';
@@ -44,6 +46,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _bio = '';
   File? _avatarImageFile;
 
+  // App update state
+  PackageInfo? _packageInfo;
+  bool _isCheckingUpdate = false;
+  bool _isDownloadingUpdate = false;
+  double _downloadProgress = 0;
+
   final _autoDeleteOptions = ['1 час', '24 часа', '7 дней', 'Никогда'];
   final _themeOptions = ['Светлая', 'Тёмная', 'Системная'];
 
@@ -54,6 +62,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     _loadSettings();
     _loadUserIfNeeded();
+    _loadPackageInfo();
+  }
+
+  Future<void> _loadPackageInfo() async {
+    final info = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() => _packageInfo = info);
+    }
   }
 
   @override

@@ -8,34 +8,44 @@ on:
 jobs:
   build-ios:
     runs-on: macos-14
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.5'
           channel: 'stable'
-      
-      - name: Get dependencies
+
+      - name: Get Flutter dependencies
         run: flutter pub get
-      
+
+      - name: Install CocoaPods
+        run: |
+          gem install cocoapods -N
+
+      - name: Install iOS pods
+        run: |
+          cd ios
+          pod install
+
       - name: Build iOS (Release, No Codesign)
         run: |
           flutter build ios --release --no-codesign
-      
+
       - name: Create Payload folder
         run: |
           mkdir -p Payload
           cp -r build/ios/iphoneos/Runner.app Payload/
-      
+
       - name: Create IPA
         run: |
           zip -rq MKR-Messenger-unsigned.ipa Payload
-      
+
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: MKR-Messenger-iOS
           path: MKR-Messenger-unsigned.ipa
+
