@@ -1,0 +1,3 @@
+[submodule "mkr_flutter"]
+	path = mkr_flutter
+	url = https://github.com/ZUA228132/mkr-messenger.git

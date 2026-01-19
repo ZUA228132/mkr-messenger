@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Ghost body solid -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,2C7.58,2 4,5.58 4,10v9c0,0 0.8,1.5 2,0s1.5,-1.5 2.5,0s1.5,1.5 2.5,0s1.5,-1.5 2.5,0s1.5,1.5 2.5,0s1.5,-1.5 2.5,0s1.5,1.5 2,0V10C20,5.58 16.42,2 12,2z"/>
+    <!-- Left eye -->
+    <circle
+        android:fillColor="#1976D2"
+        android:cx="9"
+        android:cy="10"
+        android:r="1.8"/>
+    <!-- Right eye -->
+    <circle
+        android:fillColor="#1976D2"
+        android:cx="15"
+        android:cy="10"
+        android:r="1.8"/>
+    <!-- Smile -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M9,13.5 Q12,16.5 15,13.5 Q12,15 9,13.5z"/>
+</vector>

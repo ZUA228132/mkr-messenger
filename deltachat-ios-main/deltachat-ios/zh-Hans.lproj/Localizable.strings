@@ -1,0 +1,1047 @@
+// common strings without special context
+"app_name" = "MKR";
+"ok" = "确定";
+"cancel" = "取消";
+"clear_search" = "清除搜索";
+// a noun, used on a button, short for "show link"
+"link" = "链接";
+// "scan" in the meaning of "scan QR code"
+"scan" = "扫描";
+"yes" = "是";
+"no" = "否";
+"select" = "选择";
+"on" = "开";
+"off" = "关";
+"def" = "默认";
+"default_value" = "默认值（%1$@）";
+"default_value_as_above" = "默认值（与上面相同）";
+"custom" = "自定义";
+"none" = "无";
+"automatic" = "自动";
+"strict" = "严格";
+"open" = "打开";
+"download" = "下载";
+"downloading" = "下载中…";
+"open_attachment" = "打开附件";
+"join" = "加入";
+"rejoin" = "重新加入";
+"delete" = "删除";
+"delete_for_me" = "为我删除";
+"delete_for_everyone" = "为所有人删除";
+"info" = "信息";
+"update" = "更新";
+"emoji" = "表情符号";
+"attachment" = "附件";
+// the placeholder will be replaced by the name of the image or file to attach
+"ask_attach" = "附加“%1$@”？";
+"back" = "返回";
+"close" = "关闭";
+"close_window" = "关闭窗口";
+"forward" = "转发";
+"create" = "创建";
+"reset" = "重置";
+"later" = "稍后";
+// "Resend" means "Sending the selected message(s) again to the same chat". The string is used in a menu and should be as short as possible. Resending may be needed after failures or to repost old messages to new members.
+"resend" = "重新发送";
+"edited" = "已编辑";
+"edit_message" = "编辑消息";
+// Verb "to archive", as in "put a chat in the archive", not a noun "The Archive".
+"archive" = "归档";
+// Verb "to unarchive", as in "remove a chat from the archive", opposite of the previous string
+"unarchive" = "取消归档";
+"mute" = "静音";
+"muted" = "已静音";
+"ephemeral_messages" = "消息定时销毁";
+"ephemeral_messages_hint" = "适用于此聊天的所有成员；他们仍然可以复制、保存和转发消息。";
+"save" = "保存";
+"chat" = "聊天";
+"media" = "媒体";
+"apps_and_media" = "应用和媒体";
+"profile" = "账号";
+"all_profiles" = "所有账号";
+"current_profile" = "当前账号";
+"main_menu" = "主菜单";
+"start_chat" = "开始聊天";
+"show_full_message" = "显示完整消息…";
+// Stay short here, say ~16 characters. The source string could also be "All Read", maybe that hint can make translations easier :)
+"mark_all_as_read" = "将所有标记为已读";
+"mark_as_read" = "标记为已读";
+// Shortest text for "Mark as being read". In english, this could be "Read" (past tense of "to read"), in german, this could be "Gelesen".
+"mark_as_read_short" = "已读";
+// Placeholder text when something is loading
+"loading" = "加载中…";
+"hide" = "隐藏";
+"activate" = "激活";
+"load_remote_content" = "加载远程图像";
+// Possible answers to the question are: Never, Always, Once
+"load_remote_content_ask" = "远程图像可以被用于追踪您。\n\n该设置可能还会加载字体以及其他内容。禁用状态下，您仍可能会看到嵌入的图像和缓存中的图像。\n\n要加载远程图像吗？";
+"always" = "总是";
+"always_load_remote_images" = "始终加载远程图像";
+"once" = "仅一次";
+"show_warning" = "显示警告";
+"not_now" = "现在不";
+"never" = "从不";
+"one_moment" = "稍等片刻…";
+"done" = "已完成";
+"undo" = "撤销";
+"offline" = "离线";
+// For the next view or as "continue". Should be as short as possible.
+"next" = "下一步";
+"error" = "错误";
+"error_x" = "错误：%1$@";
+"no_app_to_handle_data" = "找不到用于处理此类数据的应用。";
+"no_browser_installed" = "未安装浏览器。";
+"file_not_found" = "无法找到 %1$@。";
+// the placeholder will be replaced by the name of a file
+"cannot_save_file" = "无法保存 %1$@。";
+"copied_to_clipboard" = "已复制到剪贴板。";
+"contacts_headline" = "联系人";
+"email_address" = "电子邮件地址";
+"bad_email_address" = "错误的电子邮件地址。";
+"password" = "密码";
+"existing_password" = "现有密码";
+"now" = "现在";
+// Headline for destructive actions with no undo. Could also be "Caution" or "Warning".
+"danger" = "危险";
+"today" = "今天";
+"yesterday" = "昨天";
+"this_week" = "本周";
+"this_month" = "本月";
+"last_week" = "上周";
+"last_month" = "上个月";
+// Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by date or time, resulting in "Last seen at 12:13 AM" or "Last seen Nov 12"
+"last_seen_at" = "最后上线：%1$@";
+// Refers to the time a contact was last seen. Shown below contact name in the profile. The placeholder will be replaced by a relative point in time as "3 minutes ago" (see https://momentjs.com for more examples and languages)
+"last_seen_relative" = "最后上线 %1$@";
+"last_seen_unknown" = "最后上线：未知";
+// Shown in call duration. Avoid abbreviations, prefer full words ex. "N seconds".
+// Shown in call duration. Avoid abbreviations, prefer full words ex. "N minutes".
+// Shown beside messages that are "N minutes old". Prefer short strings, or well-known abbreviations.
+// Shown beside messages that are "N hours old". Prefer short strings, or well-known abbreviations.
+// Short form for "N Items Selected"
+"selected_colon" = "已选择：";
+"self" = "我";
+"draft" = "草稿";
+"image" = "图片";
+// Used in summaries as "Draft: Reply", similar as "Draft: Image". Use a noun here, not a verb (not: "to reply")
+"reply_noun" = "回复";
+"gif" = "Gif";
+// "Stickers" as known from other messengers; in some languages, the English "Sticker" is fine.
+"sticker" = "贴纸";
+"add_to_sticker_collection" = "添加到贴纸收藏集";
+"add_stickers_instructions" = "要添加贴纸，请点按“打开贴纸文件夹”，为贴纸包创建一个子文件夹，然后将图片和贴纸文件拖动到那里";
+"open_sticker_folder" = "打开贴纸文件夹";
+"images" = "图片";
+"audio" = "音频";
+"voice_message" = "语音消息";
+"forwarded" = "转发了";
+"forwarded_message" = "转发的消息";
+// %1$s will be replaced by the name of the person who forwarded the message
+"forwarded_by" = "转发人 %1$@";
+"video" = "视频";
+"documents" = "文档";
+"contact" = "联系人";
+"bot" = "机器人";
+"camera" = "相机";
+// As in "start a video recording" or "take a photo"; eg. the description of the "shutter button" in cameras
+"capture" = "捕获";
+"switch_camera" = "切换摄像头";
+"toggle_fullscreen" = "切换全屏模式";
+"location" = "位置";
+"locations" = "位置";
+"gallery" = "图库";
+"images_and_videos" = "图片和视频";
+"file" = "文件";
+"files" = "文件";
+"files_attach_hint" = "发送原始文件和未压缩的图片";
+// "Files" here means the "Files Selector App" or "Files Manager App"
+"choose_from_files" = "从文件中选择";
+"choose_from_gallery" = "从图库中选择";
+// "App" is used to present "Webxdc App" (https://webxdc.org) in a user friendly way. Please stay close to the original term and keep it short (it is used in menus with few screen space).
+"webxdc_app" = "私人应用";
+// plural of "App"; used to present "Webxdc App" (https://webxdc.org) in a user friendly way. Please stay close to the original term and keep it short (it is used in menus with few screen space).
+"webxdc_apps" = "私人应用";
+"webxdc_store_url" = "应用选择器 URL";
+"webxdc_store_url_explain" = "设置后，该 URL 而不是默认的 URL 将被用作“应用选择器”";
+"webxdc_draft_hint" = "点按“发送”即可分享";
+"home" = "首页";
+"games" = "游戏";
+"tools" = "工具";
+"app_size" = "大小";
+"app_date_published" = "已发布";
+"add_to_chat" = "添加到聊天";
+// short for "Browse through the App Picker/Store/Catalogue"; could also be translated as "Discover" or "Search"
+"browse" = "浏览";
+"unknown" = "未知";
+"green" = "绿色";
+"red" = "红色";
+"blue" = "蓝色";
+"orange" = "橙色";
+"cyan" = "青色";
+"purple" = "紫色";
+"magenta" = "紫红色";
+"white" = "白色";
+"zoom" = "缩放";
+"extra_small" = "特小";
+"small" = "小";
+"normal" = "正常";
+"large" = "大";
+"extra_large" = "特大";
+"fast" = "快";
+"slow" = "慢";
+// menu labels (or icon, buttons...)
+"menu_new_contact" = "新建联系人";
+"menu_new_classic_contact" = "手动添加联系人";
+"new_classic_contact_explain" = "手动添加的联系人可用于向传统电子邮件发送文本，并且不能保证端到端加密。";
+"menu_new_chat" = "新建聊天";
+"menu_new_group" = "新建群组";
+// "Chat" is a verb here, "Message to" would also fit. the string might be used in the "New Chat" screen above the contact list
+"chat_with" = "聊天…";
+"clone_chat" = "克隆聊天";
+// consider keeping the term "channel" as in WhatsApp or Telegram
+"channel" = "频道";
+// consider keeping the term "channel" as in WhatsApp or Telegram
+"channels" = "频道";
+// consider keeping the term "channel" as in WhatsApp or Telegram
+"new_channel" = "新建频道";
+// deprecated
+"add_recipients" = "添加订阅者";
+// consider keeping the term "channel" as in WhatsApp or Telegram
+"channel_name" = "频道名称";
+"email" = "邮件";
+// "New" as in "Create New Email"; shown together with "New Group" and "New Channel"
+"new_email" = "新建邮件";
+// the "Subject" of an email, use the term common in classic email apps
+"subject" = "主题";
+"menu_send" = "发送";
+"menu_toggle_keyboard" = "切换表情符号键盘";
+"menu_edit_group" = "编辑群组";
+"menu_group_name_and_image" = "群组名称和图像";
+"menu_show_global_map" = "显示所有位置";
+"menu_archive_chat" = "归档聊天";
+"menu_unarchive_chat" = "取消归档聊天";
+"menu_add_attachment" = "添加附件";
+"menu_leave_group" = "离开群组";
+"menu_leave_channel" = "离开频道";
+"menu_delete_chat" = "删除聊天";
+// Command to delete all messages in a chat. The chat itself will not be deleted but will be empty afterwards, so make sure to be different from "Delete Chat" here. "Clear" is a verb here, "Empty Chat" would also be fine (eg. in German "Chat leeren")
+"clear_chat" = "清空聊天记录";
+"delete_contact" = "删除联系人";
+"menu_delete_location" = "删除此位置？";
+"menu_message_details" = "消息详情";
+"menu_copy_to_clipboard" = "复制到剪贴板";
+"share_invite_link" = "分享邀请链接";
+"share_invite_link_explain" = "任何有此链接的人都可查看你的个人资料并开始和你聊天。请只和你信任的人分享它。";
+"invite_friends" = "邀请好友";
+// %1$s is replaced by the user's invitation link ("https://i.delta.chat/...")
+"invite_friends_text" = "在 Delta Chat 上联系我：\n%1$@";
+"menu_copy_selection_to_clipboard" = "复制所选内容";
+"menu_copy_link_to_clipboard" = "复制链接";
+"menu_copy_text_to_clipboard" = "复制文本";
+"menu_copy_image_to_clipboard" = "复制图像";
+"menu_copy_email_to_clipboard" = "复制电子邮件";
+"paste_from_clipboard" = "从剪贴板粘贴";
+"ask_copy_unopenable_link_to_clipboard" = "无法在网络浏览器中打开链接“%1$d”。是否要将链接复制到剪贴板？";
+"menu_forward" = "转发消息";
+"menu_reply" = "回复消息";
+"menu_mute" = "通知静音";
+"menu_unmute" = "取消静音";
+"menu_export_attachment" = "导出附件";
+"menu_export_attachments" = "导出附件";
+"menu_all_media" = "所有媒体";
+"all_apps_and_media" = "所有应用和媒体";
+// Command to jump to the original message corresponding to a gallery image or document
+"show_in_chat" = "在聊天中显示";
+"show_app_in_chat" = "在聊天中显示应用";
+"menu_share" = "分享";
+// Verb "to block sth." usually a mailing list or a contact, not a noun
+"block" = "屏蔽";
+"menu_block_contact" = "屏蔽联系人";
+"menu_unblock_contact" = "取消屏蔽联系人";
+"accept" = "接受";
+"menu_play" = "播放";
+"menu_pause" = "暂停";
+"menu_scroll_to_bottom" = "滚动至底部";
+"menu_scroll_to_top" = "滚动至顶部";
+"menu_help" = "帮助";
+// use the same term for "Apps" as elsewhere
+"what_is_webxdc" = "关于应用";
+"privacy_policy" = "隐私政策";
+"menu_select_all" = "全选";
+"select_chat" = "选择聊天";
+"select_more" = "选择更多";
+"menu_edit_name" = "编辑名称";
+// The placeholder will be replaced by the name the contact gave themself
+"edit_name_explain" = "设置将显示给您的昵称，而不是“%1$@”。留空可使用联系人选择的名称。";
+// The placeholder will be replaced by the name the contact gave themself
+"edit_name_placeholder" = "“%1$@”的昵称";
+"menu_settings" = "设置";
+"menu_advanced" = "高级";
+"menu_view_profile" = "查看账号";
+"menu_zoom_in" = "放大";
+"menu_zoom_out" = "缩小";
+"menu_save_log" = "保存日志";
+"menu_more_options" = "更多选项";
+"menu_learn_spelling" = "学习拼写";
+"jump_to_message" = "跳转到消息";
+"jump_to_original_message" = "跳转到原始消息";
+"copy_json" = "复制 JSON";
+"replace_draft" = "替换草稿";
+"title_share_location" = "与所有群组成员共享位置";
+"device_talk" = "设备消息";
+"device_talk_subtitle" = "本地生成的消息";
+"device_talk_explain" = "此聊天中的消息是由 Delta Chat 应用本地生成的。 它的制作者使用它来通知应用更新和使用过程中出现的问题。";
+"device_talk_welcome_message2" = "取得联系！\n\n🙌 在两台设备的主屏幕上点击“二维码”。在一台设备上选择“扫描二维码”，然后将其对准另一台设备。\n\n🌍 如果双方不在同一个房间内，可以通过视频通话进行扫描，或分享“扫描二维码”中的邀请链接。\n\n然后：尽情享受去中心化的即时通讯应用的体验。与其他流行应用不同，我们不会进行中心化控制、追踪或将您、您的朋友、同事或家人的数据出售给大型组织。";
+"edit_contact" = "编辑联系人";
+// Verb "to pin", making something sticky, not a noun or abbreviation for "pin number".
+"pin_chat" = "固定聊天";
+// Opposite of "Pin chat", removing the sticky-state from a chat.
+"unpin_chat" = "取消固定聊天";
+// Verb "to pin", making something sticky, not a noun or abbreviation for "pin number".
+"pin" = "固定";
+// Opposite of "Pin chat", removing the sticky-state from a chat.
+"unpin" = "取消固定";
+"ConversationFragment_quoted_message_not_found" = "原消息未找到";
+"reply_privately" = "私下回复";
+"source_code" = "源代码";
+// Menu item beside an app/chat that adds an icon to the system's home screen. If the user taps that icon, the app/chat is opened directly.
+"add_to_home_screen" = "添加到主屏幕";
+"donate" = "捐赠";
+"donate_device_msg" = "❤️ 看起来您很喜欢 Delta Chat！\n\n恳请您考虑捐款支持，让 Delta Chat 始终保持自由开放。\n\n虽然 Delta Chat 是自由且开源的，但开发仍需资金支持。请帮助我们保持 Delta Chat 的独立性，并在未来让它变得更加出色。\n\nhttps://delta.chat/donate";
+"mute_for_one_hour" = "静音 1 小时";
+"mute_for_eight_hours" = "静音 8 小时";
+"mute_for_one_day" = "静音 1 天";
+"mute_for_seven_days" = "静音 7 天";
+"mute_forever" = "永久静音";
+"share_location_for_5_minutes" = "5 分钟";
+"share_location_for_30_minutes" = "30 分钟";
+"share_location_for_one_hour" = "1 小时";
+"share_location_for_two_hours" = "2 小时";
+"share_location_for_six_hours" = "6 小时";
+"file_saved_to" = "文件已保存到 “%1$@”。";
+// the action "to call someone", used as a tooltip for the "phone" icon. not: "the call"
+"start_call" = "呼叫";
+// the action "to answer" or to "accept" or to "pick up" a call. not: "the answer"
+"answer_call" = "接听";
+// the action "to decline" a call, not: "the decline"
+"end_call" = "拒接";
+"outgoing_call" = "去电";
+"incoming_call" = "来电";
+"declined_call" = "已拒接的来电";
+"canceled_call" = "已取消的通话";
+"missed_call" = "未接来电";
+// the first placeholder will be replaced by a date, the second placeholder by duration, example: "Thu, 08:12 pm, 2 minutes"
+"call_date_and_duration" = "%1$@ %2$@";
+// get confirmations
+// confirmation for leaving groups or channels. If a subject is needed, "Are you sure you want to leave the chat?" would work as well
+"ask_leave_group" = "是否确定要离开？";
+"ask_delete_named_chat" = "删除聊天“%1$@”？";
+"ask_delete_message" = "删除此消息？";
+"ask_forward" = "将消息转发给 %1$@？";
+"ask_forward_multiple" = "转发消息到 %1$d 个聊天？";
+"ask_export_attachment" = "导出附件将允许您设备上的其他应用程序访问这些附件。\n\n是否继续？";
+"ask_block_contact" = "屏蔽此联系人？\n\n被屏蔽的联系人所创建的直接消息或群组将不会显示。\n\n被屏蔽的联系人所创建的其他群组仍将显示他们的消息。";
+"ask_unblock_contact" = "取消屏蔽此联系人？";
+"ask_delete_contacts" = "删除联系人？\n\n正在进行中的聊天联系人无法永久删除。";
+"ask_delete_contact" = "删除联系人 %1$@？\n\n正在进行中的聊天联系人无法永久删除。";
+"ask_start_chat_with" = "与 %1$@ 聊天？";
+// %1$s is replaced by a comma-separated list of names
+"ask_remove_members" = "将 %1$@ 从群组中移除？";
+// %1$s is replaced by a comma-separated list of names
+"ask_remove_from_channel" = "从频道中移除 %1$@？";
+"open_url_confirmation" = "是否要打开此链接？";
+// contact list
+"contacts_title" = "联系人";
+"contacts_type_email_above" = "在上方输入电子邮件地址";
+// chatlist and chat view
+"chat_archived_chats_title" = "已归档聊天";
+"chat_please_enter_message" = "请输入消息。";
+"chat_camera_unavailable" = "相机不可用。";
+"chat_unable_to_record_audio" = "无法录制音频。";
+// The placeholder will be replaced by the name of the recipient in a one-to-one chat.
+"chat_new_one_to_one_hint" = "发一条消息给 %1$@。";
+// consider keeping the term "channel" as in WhatsApp or Telegram
+"chat_new_channel_hint" = "频道是广播消息的一对多工具。";
+"chat_new_group_hint" = "在您发出第一条消息后，其他人才会看到此群组。";
+"chat_record_slide_to_cancel" = "滑动来取消";
+"chat_record_explain" = "按住即可录制语音消息，松开即可发送";
+"chat_no_chats_yet_title" = "收件箱为空。\n按“+”来开始新聊天。";
+"chat_all_archived" = "所有聊天已归档。\n按“+”来开始新聊天。";
+"chat_share_with_title" = "分享…";
+"chat_input_placeholder" = "消息";
+"chat_archived_label" = "已归档";
+"chat_request_label" = "请求";
+"chat_request_label_explain" = "在计数器和通知中包含请求";
+"chat_no_messages" = "没有消息。";
+"chat_self_talk_subtitle" = "发给自己的消息";
+"archive_empty_hint" = "已归档的聊天将显示在此处。";
+// Action to add a message to "Saved Messages". The longer form (instead of "Save" only) is needed esp. on desktop to make clear this is not about saving a file to disk
+"save_message" = "保存消息";
+"saved_messages" = "保存的消息";
+"saved_messages_explain" = "• 转发消息于此以便于访问\n\n• 做笔记或语音备忘录\n\n• 附加媒体以保存它们";
+// Should match "Saved" from "Saved messages"
+"saved" = "已保存";
+"save_as" = "另存为";
+"retry_send" = "尝试重发消息";
+"cannot_display_unsuported_file_type" = "无法显示此类文件：%1$@";
+"attachment_failed_to_load" = "加载附件失败";
+// For recording Voice messages: Description for the "Lock" button allowing to lift the thumb from the record button while recording continues
+"lock_recording" = "锁定录音";
+// mailing lists
+"mailing_list" = "邮件列表";
+// webxdc
+// "Start..." button for an app
+"start_app" = "开始…";
+// this is a warning that is shown when one tries to send something to a chat that is not yet accepted.
+"accept_request_first" = "请先接受聊天请求";
+// title shown above a list of chats where one should be selected (eg. when sharing files from a webxdc). the placeholder will be replaced by a file name
+"send_file_to" = "发送“%1$@\"到...";
+// title shown above a list contacts where one should be selected (eg. when a webxdc attempts to send a message to a chat)
+"send_message_to" = "发送消息到...";
+"enable_realtime" = "实时应用";
+"enable_realtime_explain" = "为聊天中附加的应用启用实时连接。如果启用，聊天伙伴可能会在您启动应用时发现您的 IP 地址。";
+// map
+"filter_map_on_time" = "显示时间范围内的位置";
+"show_location_traces" = "显示轨迹";
+"add_poi" = "发送兴趣点";
+// punycode warning / labeled links
+// placeholder is domain/hostname that should be trusted
+"open_external_url_trust_domain" = "不再询问 %1$@";
+"puny_code_warning_header" = "检测到可疑链接";
+// placeholder contains the hostname converted to ascii
+"puny_code_warning_question" = "是否确定要访问 %1$@？";
+// this message is shown whenever a link with non-latin characters is clicked. first placeholder is original hostname with special chars, second placeholder is hostname encoded in ascii
+"puny_code_warning_description" = "你将被转到一个链接，该链接可能通过使用来自不同字母表的相似字符对自己进行了伪装。打开标记为 %1$@ 的链接将把你带到以 ascii 码编码的 %2$@ 。如果这样的字符出乎你的意料，那么这个链接可能是有害的。";
+// search
+"search" = "搜索";
+"search_in_chat" = "搜索聊天";
+"search_files" = "搜索文件";
+"search_explain" = "搜索聊天、联系人和消息";
+"search_no_result_for_x" = "没有找到有关\"%1$@\"的结果";
+// Adjective, as in "Show Unread Messages"
+"search_unread" = "未读";
+// create/edit groups, contact/group profile
+"group_name" = "群组名称";
+"group_avatar" = "群组图像";
+"remove_group_image" = "移除群组图像";
+"change_group_image" = "更改群组图像";
+"group_create_button" = "创建群组";
+"group_please_enter_group_name" = "请输入群组名称。";
+"group_add_members" = "添加成员";
+"group_self_not_in_group" = "为了执行此操作，您必须是群组成员。";
+"profile_encryption" = "加密";
+"profile_shared_chats" = "共有聊天";
+// Separator between the list of actual members and past members
+"past_members" = "过去成员";
+"tab_contact" = "联系人";
+"tab_group" = "群组";
+"tab_gallery" = "图库";
+"tab_docs" = "文档";
+"tab_links" = "链接";
+"tab_map" = "地图";
+"tab_gallery_empty_hint" = "此聊天附加的图片和视频将显示在此处。";
+"tab_docs_empty_hint" = "此聊天附加的文档和其他文件将显示在此处。";
+"tab_image_empty_hint" = "此聊天附加的图片将显示在此处。";
+"tab_video_empty_hint" = "此聊天附加的视频将显示在此处。";
+"tab_audio_empty_hint" = "此聊天附加的音频文件和语音消息将显示在此处。";
+"tab_webxdc_empty_hint" = "此聊天附加的应用将显示在此处。";
+"tab_all_media_empty_hint" = "任何聊天附加的媒体都将显示在此处。";
+"all_files_empty_hint" = "任何聊天附加的文档和其他文件都将显示在此处。";
+"all_apps_empty_hint" = "任何聊天附加的应用都将显示在此处。";
+"media_preview" = "媒体预览";
+// option to show images in the gallery with the correct width/height aspect (instead of square); other gallery apps may be a source of inspiration for translation :)
+"aspect_ratio_grid" = "宽高比网格";
+// option to show images in the gallery as square (instead of using correct width/height)
+"square_grid" = "方形网格";
+"send_message" = "发送消息";
+// Multi Device
+// "Second Device" can also be translated as "Another Device", if that is catchier in the destination language. However, make sure to use the term consistently.
+"multidevice_title" = "添加第二台设备";
+"multidevice_same_network_hint" = "让两台设备连接相同的 Wi-Fi 或网络";
+"multidevice_this_creates_a_qr_code" = "这将创建一个二维码，第二台设备可以扫描该二维码来复制配置文件。\n\n请确保没有不必要的观察者或摄像机可以看到以下屏幕。";
+"multidevice_install_dc_on_other_device" = "在你的其他设备上安装 Delta Chat (https://get.delta.chat)";
+// "I Already Have a Profile / Add as Second Device” should be the same text as defined by the keys onboarding_alternative_logins and multidevice_receiver_title
+"multidevice_tap_scan_on_other_device" = "启动 Delta Chat，点按“我已有账号/添加为第二台设备”，然后扫描此处显示的二维码";
+// Shown inside a "QR code card" with very limited space; please formulate the text as short as possible therefore. The placeholder will be replaced by the profile name eg. "Scan to set up second device for Alice"
+"multidevice_qr_subtitle" = "扫描此处为 %1$@ 设置第二台设备";
+"multidevice_receiver_title" = "添加为第二台设备";
+"multidevice_open_settings_on_other_device" = "在第一台设备上，启动 Delta Chat，转到“设置/添加第二台设备”，然后扫描显示的二维码";
+"multidevice_receiver_scanning_ask" = "是否将账号从其他设备复制到此设备？";
+"multidevice_receiver_needs_update" = "你想导入的配置文件来自较新的 Delta Chat 版本。\n\n要继续设置第二台设备，请更新此设备上的 Delta Chat 到最新版。";
+"multidevice_abort" = "中止第二台设备的设置吗？";
+"multidevice_abort_will_invalidate_copied_qr" = "这会让复制到剪贴板的二维码失效。";
+"multidevice_transfer_done_devicemsg" = "ℹ️ 账号已传输到您的第二台设备。";
+// Shown beside progress bar, stay short
+"preparing_account" = "正在准备账号…";
+// Shown beside progress bar, stay short
+"transferring" = "传输中…";
+"troubleshooting" = "故障排除";
+// Connectivity
+// Headline for the "Inbox" eg. in the "Connectivity" view
+"incoming_messages" = "消息接收";
+// Headline for the "Outbox" eg. in the "Connectivity" view
+"outgoing_messages" = "消息发送";
+// deprecated
+"storage_on_domain" = "%1$@ 上的存储空间";
+"connectivity" = "连接";
+// Shown in the title bar if the app is "Not connected"; prefer short strings.
+"connectivity_not_connected" = "未连接";
+// Shown in the title bar if the app is "Connecting"; prefer short strings. The ellipsis is a single character (…), not three (...)
+"connectivity_connecting" = "连接中…";
+// Shown in the title bar if the app is "Updating" (eg. getting new/old message, sync things); prefer short strings. The ellipsis is a single character (…), not three (...)
+"connectivity_updating" = "更新中…";
+// Shown in the setting if the app is "Connected"
+"connectivity_connected" = "已连接";
+"sending" = "发送中…";
+"last_msg_sent_successfully" = "最后一条消息已成功发送。";
+"not_supported_by_provider" = "不被您的邮件提供商支持。";
+// Subtitle in quota context of "Connectivity" view. Should be be plural always, no number is prefixed.
+"messages" = "消息";
+// Used for describing resource usage, resulting string will be eg. "1.2 GiB of 3 GiB used"
+"part_of_total_used" = "已使用 %1$@，共 %2$@";
+// welcome and login
+// Primary button on the welcome screen, allows to create an instant profile
+"onboarding_create_instant_account" = "创建新账号";
+// Secondary button on the welcome screen, allows to "Add as Second Device", "Restore from Backup"
+"onboarding_alternative_logins" = "我已有账号";
+// This is a button and a title, allowing to use existing, classic email, setting ports, passwords and so on
+"manual_account_setup_option" = "使用传统电子邮件作为中继";
+// Instant onboarding title (there is not more to do than to set name and avatar)
+"instant_onboarding_title" = "个人资料";
+// The placeholder will be replaced by the default onboarding server
+"instant_onboarding_agree_default2" = "%1$@ 的隐私政策";
+// The placeholder will be replaced by instance name, the whole text will link to the instance page
+"instant_onboarding_agree_instance" = "关于 %1$@ 上的个人资料";
+// Confirmation button on the instant onboarding screen
+"instant_onboarding_create" = "同意并创建账号";
+// Secondary, link-like button to open a page with other possible instances
+"instant_onboarding_show_more_instances" = "使用其他服务器";
+"instant_onboarding_other_server" = "列出聊天邮件服务器";
+// Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by the group name
+"instant_onboarding_group_info" = "创建个人资料加入“%1$@” 群。";
+// Hint about what happens when "Create Profile" button in pressed; the placeholder will be replaced by contact name
+"instant_onboarding_contact_info" = "创建个人资料和 %1$@ 聊天";
+// Question shown when another user's QR code is scanned from onboarding screen
+"instant_onboarding_confirm_contact" = "你想新建个人资料并开始和 %1$@ 聊天吗？";
+// Question shown when group's/channel's QR code is scanned from onboarding screen
+"instant_onboarding_confirm_group" = "你想新建个人资料并加入 \"%1$@\" 聊天群吗？";
+"welcome_chat_over_email" = "安全的去中心化聊天";
+"scan_invitation_code" = "扫描邀请码";
+"login_title" = "登录";
+"login_advanced_hint" = "此登录适用于高级用户：\n\n• 请勿使用您在其他应用中已使用的地址。\n\n• 传统电子邮件服务器允许进行未端到端加密的聊天，此类聊天以邮件图标标记。";
+"login_inbox" = "收件箱";
+"login_imap_login" = "IMAP 登录名";
+"login_imap_server" = "IMAP 服务器";
+"login_imap_port" = "IMAP 端口";
+"login_imap_security" = "IMAP 安全类型";
+"login_outbox" = "发件箱";
+"login_smtp_login" = "SMTP 登录名";
+"login_smtp_password" = "SMTP 密码";
+"login_smtp_server" = "SMTP 服务器";
+"login_smtp_port" = "SMTP 端口";
+"login_smtp_security" = "SMTP 安全类型";
+// the word "Proxy" might be left untranslated unless the destination language has a well-known term for a "Proxy Server", acting intermediary between the app and the server
+"proxy_settings" = "代理";
+"proxy_use_proxy" = "使用代理";
+"proxy_add" = "添加代理";
+"proxy_add_explain" = "支持的代理类型：HTTP(S)、SOCKS5 和 Shadowsocks.";
+"proxy_add_url_hint" = "在此输入代理链接";
+"proxy_invalid" = "无效或不受支持的代理";
+"proxy_list_header" = "已保存的代理";
+"proxy_delete" = "删除代理";
+"proxy_delete_explain" = "是否确定要删除“%1$@”？";
+"proxy_use_proxy_confirm" = "是否要使用代理“%1$@”？";
+"proxy_share_explain" = "你的好友可以扫描二维码添加此代理";
+"proxy_share_link" = "分享链接";
+"proxy_enabled" = "代理已启用";
+"proxy_enabled_hint" = "您正在使用代理。如果您在连接时遇到问题，请尝试其他代理。";
+// "Relay" refers to the relay servers used; please chose a common term in your language, no need to be literal. If in doubt, stay with "Relay"
+"transports" = "中继";
+"add_transport" = "添加中继";
+"remove_transport" = "移除中继";
+"edit_transport" = "编辑中继";
+// shown if a QR code was scanned that can be used as a relay
+"confirm_add_transport" = "添加此中继？";
+"invalid_transport_qr" = "扫描的二维码不包含有效的中继。";
+// placeholder will be replaced by a relay server name
+"confirm_remove_transport" = "移除中继“%1$@”？\n\n只有您之前通过其他中继联系过您的联系人，他们才能联系到您。\n\n如有疑问，请稍后移除中继。";
+"login_certificate_checks" = "证书检查";
+"login_error_mail" = "请输入有效的电子邮件地址";
+"login_error_server" = "请输入有效的服务器 / IP 地址";
+"login_error_port" = "请输入有效的端口（1-65535）";
+"login_error_required_fields" = "请输入有效的电子邮件地址和密码";
+"import_backup_title" = "从备份恢复";
+"import_backup_ask" = "在“%1$@”找到备份。\n\n是否要导入并使用其中的所有数据和设置？";
+"import_backup_no_backup_found" = "未找到备份。\n\n请将备份复制到“%1$@”，然后重试。";
+// %1$s will be replaced by the failing address
+"login_error_cannot_login" = "无法作为“%1$@”登录。请检查电子邮件地址和密码是否正确。";
+// TLS certificate checks
+"accept_invalid_certificates" = "接受无效的证书";
+"switch_account" = "切换账号";
+"add_account" = "添加账号";
+// for translations, you can also think of "Profile Tag" or "Profile Description" as the source string
+"profile_tag" = "账号标签";
+"profile_tag_hint" = "如工作、家庭";
+"profile_tag_explain" = "设置仅对您可见的标签，帮助区分您的账号。";
+// Menu entry to sort an item to the beginning of a list. Only "To Top" may do as well in some translations, if that helps to stay shorter.
+"move_to_top" = "移到顶部";
+"delete_account" = "删除账号";
+"delete_account_ask" = "是否确定要删除您的账号数据？";
+"delete_account_explain_with_name" = "将会删除此设备上“%1$@”的所有账号数据，包括您的端到端加密设置、联系人、聊天、消息和媒体。此操作无法撤销。";
+"unconfigured_account" = "未配置的账号";
+"unconfigured_account_hint" = "打开账号来配置它";
+"try_connect_now" = "立即尝试连接";
+"sync_all" = "同步所有";
+// Translations: %1$s will be replaced by a more detailed error message
+"configuration_failed_with_error" = "配置失败。错误：%1$@";
+// share and forward messages
+// Translators: shown above a chat/contact list when selecting recipients to forward messages
+"forward_to" = "转发给…";
+// first placeholder is replaced by the number of files (always 2 or more); second placeholder is replaced by a chat name
+"ask_send_files_to_chat" = "发送 %1$d 个文件到“%2$@”？";
+"ask_send_files_to_selected_chats" = "发送 %1$d 个文件到 %2$d 个聊天？";
+"videos_sent_without_recoding" = "（视频以未经处理的大文件形式发送。要发送较小的视频文件，请分别附加它们）";
+"share_text_multiple_chats" = "发送这段文字到 %1$d 个聊天？\n\n\"%2$@“";
+"share_abort" = "由于缺少权限，分享中止。";
+// preferences
+"pref_using_custom" = "使用自定义值： %1$@";
+"pref_using_default" = "使用默认值： %1$@";
+"pref_profile_info_headline" = "您的个人资料";
+"pref_profile_photo" = "个人资料图片";
+"pref_blocked_contacts" = "已屏蔽的联系人";
+"blocked_empty_hint" = "被您屏蔽的联系人将显示于此。";
+"pref_who_can_see_profile_explain" = "在与其他用户交流时，您的个人资料图片和名称将与您的消息一起发送。";
+"pref_your_name" = "您的名称";
+// Label of the Bio/Signature/Status/Motto field
+"pref_default_status_label" = "签名档";
+"pref_enter_sends" = "Enter 键发送";
+"pref_enter_sends_explain" = "按 Enter 键发送文本消息";
+"pref_outgoing_media_quality" = "发出媒体质量";
+"pref_outgoing_balanced" = "平衡";
+"pref_outgoing_worse" = "体积小，但质量更差";
+"pref_vibrate" = "振动";
+"pref_screen_security" = "屏幕安全";
+// Translators: Must indicate that there is no guarantee as the system may not honor our request.
+"pref_screen_security_explain" = "请求系统在最近任务列表中和本应用内阻止截屏";
+"pref_screen_security_please_restart_hint" = "要应用屏幕安全设置，请重新启动本应用。";
+"pref_notifications" = "通知";
+"pref_mention_notifications" = "提及";
+"pref_mention_notifications_explain" = "在静音群中，通知直接与你相关的消息，比如回复或回应";
+"pref_notifications_show" = "显示";
+"pref_notifications_priority" = "优先级";
+"pref_notifications_explain" = "为新消息启用系统通知";
+"pref_show_notification_content" = "在通知中显示消息内容";
+"pref_show_notification_content_explain" = "在通知中显示发送者和消息开头部分";
+"pref_led_color" = "LED 颜色";
+"pref_sound" = "声音";
+"pref_silent" = "无声";
+"pref_privacy" = "隐私";
+// deprecated, use pref_chats
+"pref_chats_and_media" = "聊天与媒体";
+"pref_system_default" = "系统默认";
+// Translators: as in "opposite of dark"
+"pref_light_theme" = "明亮";
+"pref_dark_theme" = "黑暗";
+"pref_appearance" = "外观";
+"pref_theme" = "主题";
+"pref_language" = "语言";
+"pref_use_system_ui_font" = "使用系统字体";
+"pref_incognito_keyboard" = "无痕键盘";
+// Translators: Must indicate that there is no guarantee as the system may not honor our request.
+"pref_incognito_keyboard_explain" = "请求输入法禁用个性化学习";
+"pref_read_receipts" = "已读回执";
+"pref_read_receipts_explain" = "禁用已读回执后，您将无法看到其他人的已读回执。";
+"pref_server" = "服务器";
+"pref_encryption" = "加密";
+"pref_manage_keys" = "管理密钥";
+"pref_chats" = "聊天";
+"pref_in_chat_sounds" = "聊天音";
+"pref_view_log" = "查看日志";
+"pref_saved_log" = "已将日志保存至“下载”文件夹";
+"pref_save_log_failed" = "保存日志失败";
+"pref_log_header" = "日志";
+"pref_other" = "其他";
+"pref_backup" = "备份";
+"pref_backup_explain" = "将聊天备份至外部存储";
+"pref_backup_export_explain" = "备份可帮助您在此设备或另一台设备上设置全新安装的本应用。\n\n备份将包含所有消息、联系人、聊天以及端到端的 Autocrypt 设置。请将备份文件保存在安全的地方，或尽快将其删除。";
+"pref_backup_export_this" = "导出此账号";
+// the placeholder will be replaced by the number of profiles to export; the number is always larger than 1
+"pref_backup_export_all" = "导出全部 %1$d 个账号";
+"pref_backup_export_start_button" = "开始备份";
+"pref_backup_written_to_x" = "备份已成功写入到“%1$@”。";
+// No need to translate "Wallpaper" literally. Chose what is common in your language for a "Wallpaper" or a "Background". Avoid adding the term "image" here, as the "Wallpaper" may also be just a single color.
+"pref_background" = "背景";
+"pref_background_btn_default" = "使用默认图像";
+"pref_background_btn_gallery" = "从图库中选择";
+"pref_imap_folder_warn_disable_defaults" = "若要更改此选项，请您务必调整服务器以及其他客户端的相应设置。\n\n否则软件可能无法正常工作。";
+// No need to be literal here, you can also use "Use Multiple Devices", "Support Multiple Devices" or other fitting terms. However, it should fit to the wording or your language at https://delta.chat/help
+"pref_multidevice" = "多设备模式";
+"pref_multidevice_explain" = "将您的消息与其他设备同步。添加第二台设备时自动启用";
+"pref_multidevice_change_warn" = "在多个设备上使用同一账号时，必须启用多设备模式。仅当您已从所有其他设备中移除此账号后，才能禁用此设置。\n\n在多个设备上使用该账号时禁用多设备模式会导致错过消息和其他问题。";
+"pref_auto_folder_moves" = "自动移动至 DeltaChat 文件夹";
+"pref_only_fetch_mvbox_title" = "只从 DeltaChat 文件夹获取";
+"pref_show_emails" = "显示传统电子邮件";
+"pref_show_emails_no" = "不显示，仅聊天";
+"pref_show_emails_accepted_contacts" = "已接受的联系人";
+"pref_show_emails_all" = "全部";
+"pref_experimental_features" = "实验性功能";
+"pref_experimental_features_explain" = "这些功能可能不稳定，可能会更改或移除";
+"pref_on_demand_location_streaming" = "按需位置流";
+"pref_background_default" = "默认背景";
+"pref_background_default_color" = "默认颜色";
+"pref_background_custom_image" = "自定义图像";
+"pref_background_custom_color" = "自定义颜色";
+"export_aborted" = "导出已中止。";
+"auto_download_messages" = "自动下载消息";
+// %1$s will be replaced by a human-readable number of bytes, eg. 32 KiB, 1 MiB
+"up_to_x" = "%1$@ 以下";
+"up_to_x_most_worse_quality_images" = "%1$@ 以下，最差的图像质量";
+"up_to_x_most_balanced_quality_images" = "%1$@ 以下，均衡的图像质量";
+"download_failed" = "下载失败";
+// %1$s will be replaced by a human-readable number of bytes, eg. 32 KiB, 1 MiB. Resulting string eg. "1 MiB message"
+"n_bytes_message" = "%1$@ 消息";
+// %1$s will be replaced by human-readable date and time
+"download_max_available_until" = "下载最晚于 %1$@ 前可用";
+"select_profile" = "选择账号";
+"profile_image_select" = "选择个人资料图片";
+"select_your_new_profile_image" = "选择新的个人资料图片";
+"profile_image_delete" = "删除个人资料图片";
+"pref_show_tray_icon" = "显示托盘图标";
+"pref_edit_profile" = "编辑个人资料";
+"disable_imap_idle" = "禁用 IMAP IDLE";
+"disable_imap_idle_explain" = "即便服务器支持，也不要使用 IMAP IDLE 扩展。启用后会造成消息获取延迟，请仅出于测试目的启用该功能。";
+"send_stats_to_devs" = "发送统计数据给 Delta Chat 开发者";
+"stats_device_message" = "您是否愿意通过每周发送匿名使用统计数据来帮助改进 Delta Chat 并支持相关研究？\n\n👉 点击此处… 👈";
+"stats_confirmation_dialog" = "您是否愿意通过每周发送匿名使用统计数据来帮助改进 Delta Chat 并支持相关研究？";
+"stats_thanks" = "谢谢！您随时可以在“设置 -> 高级”中禁用发送功能。\n\n您是否愿意抽出 5 分钟时间参与一项关于 Delta Chat 安全性的科学研究？";
+"stats_disable_dialog" = "统计数据发送功能已启用。\n\n是否要禁用此功能？";
+"disable" = "禁用";
+"stats_keep_sending" = "继续发送";
+"stats_msg_body" = "附件包含匿名使用统计数据，这有助于我们改进 Delta Chat。如需了解详情，请访问 https://delta.chat/help#statssending 。谢谢！";
+// Emoji picker and categories
+"emoji_search_results" = "搜索结果";
+"emoji_not_found" = "未找到表情符号";
+"emoji_recent" = "最近用过";
+"emoji_people" = "人物与身体";
+"emoji_nature" = "动物与自然";
+"emoji_foods" = "食品与饮料";
+"emoji_activity" = "活动";
+"emoji_places" = "出行与地点";
+"emoji_objects" = "物品";
+"emoji_symbols" = "符号";
+"emoji_flags" = "旗帜";
+// Reactions
+"reactions" = "回应";
+// Verb, the action of adding a "Reaction" to a message. Used eg. in context menus, similar to "Reply" or "Forward"
+"react" = "回应";
+// %1$s will be replaced by an emoji. %2$s will be replaced by message summary (the summary is often long and whole string gets truncated; words after %2$s will often not being visible). Eg. 'You reacted 👍 to "Found my suitcase"'. Use less than 20 characters, otherwise the string will be truncated too soon and too few information are shown. Do not try to translate "reacted to" too strict. Depending on the language, "added 👍 to" or "gave 👍 to" or just "👍 to" may be shorter and/or clearer and work as well.
+"reaction_by_you" = "你对 “%2$@” 回应了 %1$@";
+// %1$s will be replaced a name. %2$s will be replaced by an emoji. %3$s will be replaced by message summary (the summary is often long and whole string gets truncated; words after %3$s will often not being visible). Eg. 'Alice reacted 👍 to "Nice photos"'. Use less than 20 characters, otherwise the string will be truncated too soon and too few information are shown. Do not try to translate "reacted to" too strict. Depending on the language, "added 👍 to" or "gave 👍 to" or just "👍 to" may be shorter and/or clearer work as well.
+"reaction_by_other" = "%1$@ 对 “%3$@” 回应了 %2$@";
+// automatically delete message
+"delete_old_messages" = "删除旧消息";
+"autodel_device_title" = "从设备删除消息";
+"autodel_server_title" = "从服务器删除消息";
+// %1$d will be replaced by the number of messages, you can assume plural/lots here. %2$s will be replaced by a timespan option.
+"autodel_device_ask" = "您是否要立即删除 %1$d 条消息，并在之后于消息收到 %2$@ 删除它们？\n\n• 这包括所有媒体文件\n\n• 无论消息是否被浏览过，它们都将被删除\n\n• 在本地删除中，“保存的消息”将被跳过";
+// %1$d will be replaced by the number of messages, you can assume plural/lots here. %2$s will be replaced by a timespan option.
+"autodel_server_ask" = "您是否要立即删除 %1$d 条消息，并在之后于消息收到 %2$@ 删除它们？\n\n⚠️ 这包括服务器所有文件夹中的电子邮件、媒体和“保存的消息”\n\n⚠️ 如果您想在服务器上保留数据或使用传统电子邮件客户端，请勿使用此功能";
+// shown below enabled autodel_server-option, should be a summary of autodel_server_ask and remind about the impact
+"autodel_server_enabled_hint" = "这包括所有服务器文件夹中的电子邮件、媒体和“保存的消息”。如果您想在服务器上保留数据，或者也使用传统电子邮件客户端，请勿使用此功能";
+"autodel_server_warn_multi_device_title" = "开启一次性删除";
+"autodel_server_warn_multi_device" = "如果您启用一次删除，则无法在此配置文件中使用多台设备。";
+"autodel_confirm" = "我了解，将这些消息全部删除";
+// "At once" in the meaning of "Immediately", without any intervening time.
+"autodel_at_once" = "下载后立即";
+"after_5_minutes" = "5 分钟后";
+"autodel_after_1_hour" = "1 小时后";
+"autodel_after_1_day" = "1 天后";
+"autodel_after_1_week" = "1 周后";
+"after_5_weeks" = "5 周后";
+"autodel_after_1_year" = "1 年后";
+// system messages
+"systemmsg_subject_for_new_contact" = "来自 %1$@ 的消息";
+"systemmsg_failed_sending_to" = "发送消息给 %1$@ 失败。";
+// %1$s will be replaced by the old group name, %2$s will be replaced by the new group name
+"group_name_changed_by_you" = "你已将群组名称从“%1$@”更改为“%2$@”";
+// %1$s will be replaced by the old group name, %2$s will be replaced by the new group name, %3$s will be replaced by name and address of the contact who did the action.
+"group_name_changed_by_other" = "%3$@已将群组名称从“%1$@”更改为“%2$@”";
+"group_image_changed_by_you" = "你更改了群组图像";
+// %1$s will be replaced by name of the contact who did the action
+"group_image_changed_by_other" = "%1$@ 更改了群组图像";
+// %1$s will be replaced by name of the contact added to the group
+"member_x_added" = "添加了成员 %1$@ 。";
+// %1$s will be replaced by name of the contact added to the group
+"add_member_by_you" = "你添加了成员 %1$@";
+// %1$s will be replaced by name of the contact added to the group, %2$s will be replaced by name of the contact who did the action
+"add_member_by_other" = "%2$@ 添加了成员 %1$@";
+// %1$s will be replaced by name of the contact removed from the group
+"remove_member_by_you" = "你移除了成员 %1$@";
+// %1$s will be replaced by name of the contact removed from the group, %2$s will be replaced by name of the contact who did the action
+"remove_member_by_other" = "%2$@ 移除了成员 %1$@";
+// %1$s will be replaced by name of the contact removed from the group; this string is used when it's unclear who did the action
+"member_x_removed" = "已移除成员 %1$@ ";
+// "left" in the meaning of "exited".
+"group_left_by_you" = "您已离开群组。";
+// "left" in the meaning of "exited".
+"channel_left_by_you" = "您已离开频道。";
+"you_joined_the_channel" = "您已加入频道。";
+// "left" in the meaning of "exited"; %1$s will be replaced by name of the contact leaving the group
+"group_left_by_other" = "%1$@ 退出了群组";
+"group_image_deleted_by_you" = "你删除了群组图像";
+// %1$s will be replaced by name of the contact
+"group_image_deleted_by_other" = "%1$@ 删除了群组图像";
+"location_enabled_by_you" = "你开启了位置流";
+// %1$s will be replaced by name of the contact
+"location_enabled_by_other" = "%1$@ 开启了位置流";
+"ephemeral_timer_disabled_by_you" = "你禁用了消息定时销毁计时器";
+// %1$s will be replaced by name of the contact
+"ephemeral_timer_disabled_by_other" = "%1$@ 禁用了消息定时销毁计时器";
+// %1$s will be replaced by the number of seconds (always >1) the timer is set to
+"ephemeral_timer_seconds_by_you" = "你将消息定时销毁计时器设置为 %1$@ 秒";
+// %1$s will be replaced by the number of seconds (always >1) the timer is set to, %2$s will be replaced by name of the contact
+"ephemeral_timer_seconds_by_other" = "%2$@ 将消息定时销毁计时器设为 %1$@ 秒";
+// deprecated, usage needs to be removed in core
+"ephemeral_timer_1_minute_by_you" = "你将消息定时销毁计时器设为 1 分钟";
+// deprecated, usage needs to be removed in core
+"ephemeral_timer_1_minute_by_other" = "%1$@ 将消息定时销毁计时器设为 1 分钟";
+"ephemeral_timer_1_hour_by_you" = "你将消息定时销毁计时器设为 1 小时";
+// %1$s will be replaced by name of the contact
+"ephemeral_timer_1_hour_by_other" = "%1$@ 将消息定时销毁计时器设为 1 小时";
+"ephemeral_timer_1_day_by_you" = "你将消息定时销毁计时器设为 1 天";
+// %1$s will be replaced by name of the contact
+"ephemeral_timer_1_day_by_other" = "%1$@ 将消息定时销毁计时器设为 1 天";
+"ephemeral_timer_1_week_by_you" = "你将消息定时销毁计时器设为 1 周";
+// %1$s will be replaced by name of the contact
+"ephemeral_timer_1_week_by_other" = "%1$@ 将消息定时销毁计时器设为 1 天";
+"ephemeral_timer_1_year_by_you" = "您将消失消息计时器设置为 1 年。";
+// %1$s will be replaced by name of the contact
+"ephemeral_timer_1_year_by_other" = "%1$@ 将消失消息计时器设置为 1 年。";
+// %1$s will be replaced by the number of minutes (always >1) the timer is set to
+"ephemeral_timer_minutes_by_you" = "你将消息定时销毁计时器设为 %1$@ 分钟";
+// %1$s will be replaced by the number of minutes (always >1) the timer is set to, %2$s will be replaced by name of the contact
+"ephemeral_timer_minutes_by_other" = "%2$@ 将消息定时销毁计时器设为 %1$@ 分钟";
+// %1$s will be replaced by the number of hours (always >1) the timer is set to
+"ephemeral_timer_hours_by_you" = "你将消息定时销毁计时器设为 %1$@ 小时";
+// %1$s will be replaced by the number of hours (always >1) the timer is set to, %2$s will be replaced by name of the contact
+"ephemeral_timer_hours_by_other" = "%2$@ 将消息定时销毁计时器设为 %1$@ 小时。";
+// %1$s will be replaced by the number of days (always >1) the timer is set to
+"ephemeral_timer_days_by_you" = "你将消息定时销毁计时器设为 %1$@ 天";
+// %1$s will be replaced by the number of days (always >1) the timer is set to, %2$s will be replaced by name of the contact
+"ephemeral_timer_days_by_other" = "%2$@ 将消息定时销毁计时器设为 %1$@ 天";
+// %1$s will be replaced by the number of weeks (always >1) the timer is set to
+"ephemeral_timer_weeks_by_you" = "你将消息定时销毁计时器设为 %1$@ 周";
+// %1$s will be replaced by the number of weeks (always >1) the timer is set to, %2$s will be replaced by name of the contact
+"ephemeral_timer_weeks_by_other" = "%2$@ 将消息定时销毁计时器设为 %1$@ 周";
+"chat_unencrypted_explanation" = "此聊天中的消息使用传统电子邮件，未进行端到端加密。";
+"chat_protection_enabled_tap_to_learn_more" = "消息是端到端加密的。点按即可了解详情。";
+"chat_protection_enabled_explanation" = "此聊天中的所有消息都经过端到端加密。\n\n端到端加密可确保您与聊天对象之间的消息保持私密。即使是服务器、提供者或中继也无法读取。";
+"invalid_unencrypted_tap_to_learn_more" = "⚠️ %1$@ 需要端到端加密，但此聊天尚未设置。点按即可了解详情。";
+"invalid_unencrypted_explanation" = "要建立端到端加密，你可以亲自和联系人碰面并扫描联系人的二维码";
+"learn_more" = "了解更多";
+"devicemsg_self_deleted" = "您已删除“保存的消息”聊天。\n\nℹ️要再次使用“保存的消息”功能，请创建一个与自己的新聊天。";
+// %1$s will be replaced by the amount of storage already used, sth. as '500 MB'. If you want to use a percentage sign, type in two of them, eg. %1$s %%
+"devicemsg_storage_exceeding" = "⚠️ 您的服务提供者存储空间即将用完：已使用 %1$@%%。\n\n如果存储空间已满，您可能无法接收消息。\n\n👉 请检查您是否可以在服务提供者的网页界面中删除旧数据，并考虑启用“设置/聊天/删除旧消息”。您可以随时在“设置/连接”中查看当前的存储空间使用情况。";
+// %1%s will be replaced by date and time in some human-readable format
+"devicemsg_bad_time" = "⚠️设备的日期或时间似乎不准确 （%1$@）。\n\n请调整时钟⏰🔧以确保能够正确接收消息。";
+"devicemsg_update_reminder" = "⚠️您的 Delta Chat 版本可能过时了。\n\n这可能会在您的聊天伙伴使用更新的版本时造成问题。并且您缺失了最新功能😳\n请浏览 https://get.delta.chat 或应用商店来获取更新。";
+// Some options as "Add Second Device" or "Backup" may require the system PIN/Fingerprint/Gesture/Etc. to be entered in a system dialog. This hint is added to the system dialog, below a title as "Add Second Device" or "Backup".
+"enter_system_secret_to_continue" = "解锁以继续";
+// qr code stuff
+"qr_code" = "二维码";
+"load_qr_code_as_image" = "从图像加载二维码";
+"qrscan_title" = "扫描二维码";
+"qrscan_hint" = "将摄像头对准二维码。";
+"qrscan_hint_desktop" = "移动二维码到相机";
+"qrscan_failed" = "二维码无法被解码";
+"qrscan_ask_join_group" = "是否要加入群组“%1$@”？";
+"qrscan_ask_join_channel" = "是否要加入频道“%1$@”？";
+"qrscan_fingerprint_mismatch" = "扫描到的指纹与上次见到的 %1$@ 的指纹不匹配。";
+"qrscan_no_addr_found" = "此二维码包含指纹，但没有电子邮件地址。\n\n对于带外验证，请先与接收者建立加密连接。";
+"qrscan_contains_text" = "已扫描到的二维码文本：\n\n%1$@";
+"qrscan_contains_url" = "已扫描到的二维码 URL：\n\n%1$@";
+"qrscan_fingerprint_label" = "指纹";
+"withdraw_verifycontact_explain" = "其他人可以扫描此二维码与您联系。\n\n您可以重置它，这样现有的二维码或邀请链接将不再有效。";
+"withdraw_verifygroup_explain" = "其他人可以扫描此二维码以加入群组“%1$@”。\n\n您可以重置它，这样现有的二维码或邀请链接将不再有效。";
+"withdraw_joinbroadcast_explain" = "其他人可以扫描此二维码加入频道“%1$@”。\n\n您可以重置该二维码，使现有二维码或邀请链接失效。";
+"withdraw_qr_code" = "重置二维码";
+"revive_verifycontact_explain" = "此二维码已重置，不再有效。";
+"revive_qr_code" = "激活二维码";
+"qrshow_title" = "邀请二维码";
+"qrshow_x_joining" = "添加 %1$@。";
+"qrshow_x_verified" = "%1$@ 已验证。";
+"qrshow_x_has_joined_group" = "%1$@ 已加入群组。";
+"qrshow_join_group_title" = "邀请二维码";
+// This text is shown inside the "QR code card" with very limited space; please formulate the text as short as possible therefore. The placeholder will be replaced by the group name, eg. "Scan to join group \"Testing group\""
+"qrshow_join_group_hint" = "扫描即可加入群组“%1$@”";
+"qrshow_join_channel_hint" = "扫描即可加入频道“%1$@”";
+"qrshow_join_contact_title" = "邀请二维码";
+// This text is shown inside the "QR code card" with very limited space; please formulate the text as short as possible therefore. The placeholder will be replaced by the profile name eg. "Scan to chat with Alice"
+"qrshow_join_contact_hint" = "扫描即可与 %1$@ 聊天";
+"qrshow_join_contact_no_connection_toast" = "没有互联网连接，无法进行二维码设置。";
+"qraccount_ask_create_and_login" = "在“%1$@”创建新的电子邮件地址并登录？";
+"set_name_and_avatar_explain" = "设置联系人可以识别的名称，您还可以设置个人资料图片。";
+"please_enter_name" = "请输入名称。";
+"qraccount_qr_code_cannot_be_used" = "扫描的二维码不能用于创建新账号。";
+// the placeholder will be replaced by the address of the profile
+"qrlogin_ask_login" = "登录 \"%1$@\"吗？";
+// first placeholder will be replaced by name of the inviter, second placeholder will be replaced by the name of the inviter.
+"secure_join_started" = "%1$@ 邀请你加入此群组。\n\n等待 %2$@ 的设备回复…";
+// first placeholder will be replaced by name of the inviter, second placeholder will be replaced by the name of the inviter.
+"secure_join_channel_started" = "%1$@ 邀请您加入此频道。\n\n正在等待 %2$@ 的设备回复…";
+// placeholder will be replaced by the name of the inviter.
+"secure_join_replies" = "%1$@ 已回复，等待被加入群组…";
+"secure_join_wait" = "正在建立连接，请稍候…";
+"contact_verified" = "%1$@ 已验证。";
+// Shown in contact profile. The placeholder will be replaced by the name of the contact that introduced the contact.
+"verified_by" = "验证人 %1$@";
+"verified_by_you" = "由您验证";
+"verified_by_unknown" = "已验证";
+// deprecated
+"verified_contact_required_explain" = "要确保端到端加密，你只能将带有绿色验证标识的联系人到此群中。\n\n你可以亲自和未验证联系人线下碰面并扫描联系人二维码来验证。";
+"mailto_dialog_header_select_chat" = "选择要发送消息的聊天";
+// first placeholder is the name of the chat
+"confirm_replace_draft" = "%1$@ 已经有一条草稿消息，是否要替换？";
+"mailto_link_could_not_be_decoded" = "无法解码 mailto 链接：%1$@";
+// notifications
+"notify_reply_button" = "回复";
+"notify_new_message" = "新消息";
+"notify_background_connection_enabled" = "已启用后台连接";
+"notify_priority_high" = "高";
+"notify_priority_max" = "最高";
+"notify_name_and_message" = "名称和消息";
+"notify_name_only" = "仅名称";
+"notify_no_name_or_message" = "不显示名称或消息";
+"notifications_disabled" = "已禁用通知";
+"unreliable_bg_notifications" = "启用“强制后台连接”以获得可靠的通知";
+"new_messages" = "新消息";
+// Body text for a generic "New messages" notification. Shown if we do not have more information about a new messages. Note, that the string is also referenced at https://github.com/deltachat/notifiers
+"new_messages_body" = "你有新消息";
+"n_messages_in_m_chats" = "%1$d 条消息，位于 %2$d 个聊天内";
+// permissions
+"perm_required_title" = "需要权限";
+"perm_continue" = "继续";
+"perm_explain_access_to_camera_denied" = "要拍照或录像，请转至应用设置，选择“权限”，然后启用“相机”。";
+// give the user an idea where to find the "Microphone" option. the hint is only shown if access was initially denied by the user. pick up wordings really used on the systems, but do not be overly precise: things shift around often and there are too many system we support to track every detail and click path
+"perm_explain_access_to_mic_denied" = "要发送音频消息，请转到系统或应用设置，选择“权限”或“隐私和安全”，然后启用“麦克风”。";
+"perm_explain_access_to_storage_denied" = "要发送或接收文件，请转至应用设置，选择“权限”，然后启用“存储”。";
+"perm_explain_access_to_location_denied" = "要附加位置，请转至应用设置，选择“权限”，然后启用“位置”。";
+"perm_explain_access_to_notifications_denied" = "要接收通知，请转到“系统设置/应用/Delta Chat\"并开启”通知“。";
+// ImageEditorHud
+"ImageEditorHud_draw_anywhere_to_blur" = "对任意地方涂抹以进行模糊";
+"ImageEditorHud_add_text" = "添加文字";
+"ImageEditorHud_blur" = "模糊";
+"ImageEditorHud_brush_marker" = "记号笔";
+"ImageEditorHud_brush_highlight" = "荧光笔";
+"ImageEditorHud_crop" = "裁剪";
+"ImageEditorHud_flip" = "翻转";
+"ImageEditorHud_rotate" = "旋转";
+// strings introduced on desktop. we want to share strings between the os, in general, please do not add generic strings here
+"about_offical_app_desktop" = "这是 Delta Chat 官方桌面应用。";
+"about_licensed_under_desktop" = "本软件在 GNU GPL 版本 3 下获得授权，其源代码可从 GitHub 获得。";
+"welcome_desktop" = "欢迎使用 Delta Chat";
+"global_menu_preferences_language_desktop" = "语言";
+"global_menu_file_desktop" = "文件";
+"global_menu_file_quit_desktop" = "退出";
+"global_menu_edit_desktop" = "编辑";
+"global_menu_edit_undo_desktop" = "撤销";
+"global_menu_edit_redo_desktop" = "重做";
+"global_menu_edit_cut_desktop" = "剪切";
+"global_menu_edit_copy_desktop" = "复制";
+"global_menu_edit_paste_desktop" = "粘贴";
+"global_menu_view_desktop" = "视图";
+"global_menu_view_floatontop_desktop" = "浮于顶层";
+"global_menu_view_developer_desktop" = "开发者";
+"global_menu_view_developer_tools_desktop" = "开发者工具";
+"global_menu_help_desktop" = "帮助";
+"delta_chat_homepage" = "Delta Chat 主页";
+"contribute" = "贡献";
+"global_menu_help_report_desktop" = "报告问题";
+"global_menu_help_about_desktop" = "关于 Delta Chat";
+"global_menu_file_open_desktop" = "打开 Delta Chat";
+"global_menu_minimize_to_tray" = "最小化";
+"no_chat_selected_suggestion_desktop" = "选择聊天或创建新聊天";
+"write_message_desktop" = "输入消息…";
+"encryption_info_title_desktop" = "加密信息";
+"delete_message_desktop" = "删除消息";
+"more_info_desktop" = "更多信息";
+"timestamp_format_m_desktop" = "MMM D";
+"remove_desktop" = "移除";
+"save_desktop" = "保存";
+// Opposite of "Save". Undo a "Save" action. Similar to "Unmute", "Unpin". Could also be worded as "Save no longer" or so.
+"unsave" = "取消保存";
+"name_desktop" = "名称";
+"select_group_image_desktop" = "选择群组图像";
+"export_backup_desktop" = "导出备份";
+"message_detail_sent_desktop" = "发送于";
+"message_detail_received_desktop" = "接收于";
+"menu.view.developer.open.log.folder" = "打开日志文件夹";
+"menu.view.developer.open.current.log.file" = "打开当前日志文件";
+"explain_desktop_minimized_disabled_tray_pref" = "在 Delta Chat 带 --minimized 参数启动时，无法禁用托盘图标。";
+"no_spellcheck_suggestions_found" = "未找到拼写建议";
+"show_window" = "显示窗口";
+// title of the "keybindings" dialog (for the keybindings names as such, where possible the normal command strings are used)
+"keybindings" = "按键绑定";
+"switch_between_chats" = "在不同聊天间切换";
+"scroll_messages" = "滚动消息";
+// command to put the cursor to the search input field
+"focus_search_input" = "聚焦搜索";
+// command to put the cursor to the message input field
+"focus_message_input" = "聚焦消息输入";
+"force_refresh_network" = "强制刷新网络";
+"insert_newline" = "插入新行";
+// accessibility, the general idea is to use the normal strings for accessibility hints wherever possible
+"a11y_delivery_status_error" = "发送状态：错误";
+"a11y_delivery_status_sending" = "发送状态：发送中";
+"a11y_delivery_status_draft" = "发送状态：草稿";
+"a11y_delivery_status_delivered" = "发送状态：已投递";
+"a11y_delivery_status_read" = "发送状态：已读";
+"a11y_delivery_status_invalid" = "无效的发送状态";
+"a11y_message_context_menu_btn_label" = "消息操作";
+"a11y_background_preview_label" = "背景预览";
+"a11y_disappearing_messages_activated" = "消息定时销毁已激活";
+// iOS specific strings, developers: please take care to remove strings that are no longer used!
+"stop_sharing_location" = "停止共享位置";
+"a11y_voice_message_hint_ios" = "录制后，点按两次即可发送。如需舍弃录制内容，请双指滑动。";
+"a11y_connectivity_hint" = "双击即可查看连接详情。";
+"login_error_no_internet_connection" = "无互联网连接，登录失败。";
+"share_account_not_configured" = "账号未配置。";
+"cannot_play_audio_file" = "无法播放音频文件。";
+// iOS camera permission alert
+"perm_ios_explain_access_to_camera_denied" = "要拍照、拍摄视频或扫描二维码，请打开系统设置并启用“相机”。";
+"open_settings" = "打开设置";
+// iOS device contact alert
+"import_device_contacts" = "导入设备联系人";
+"import_device_contacts_hint" = "要与你设备中的联系人聊天，请打开“设置”并启用“联系人”。";
+// iOS notification settings
+"disabled_in_dc" = "在 Delta Chat 中被禁用";
+"disabled_in_system_settings" = "在系统设置中被禁用";
+"bg_app_refresh_disabled" = "“后台应用刷新”在系统设置中被禁用";
+"notifications_avg_minutes" = "平均每 %1$d 分钟";
+"notifications_avg_hours" = "平均每 %1$d 小时";
+"last_check_at" = "检查于 %1$@";
+"system_settings" = "系统设置";
+// shown below the button "System Settings" on the notification screen. this is a hint about what can be edited on System Settings' Notification page - eg. the notification type (banner, lock screen, notification centre), sound, badges and so on. no need to be exhaustive here, it is only to give the user an idea.
+"system_settings_notify_explain_ios" = "编辑类型、徽章、预览等";
+// iOS shortcut widget
+// use the same translation for "Shortcuts" as the system is using, often the term "Shortcut" stays untranslated; check eg. how the "Shortcuts" system app is called in your locale
+"shortcuts_widget_title" = "快捷方式";
+// use the same translation for "Widget" as the system is using; often the term "Widget" stays untranslated
+"shortcuts_widget_description" = "使用 Delta Chat 的“添加到微件”添加项目";
+// use the same translation for "Widget" as the system is using; often the term "Widget" stays untranslated
+"remove_from_widget" = "从微件中移除";
+// use the same translation for "Widget" as the system is using; often the term "Widget" stays untranslated
+"add_to_widget" = "添加到微件";
+// iOS permissions, copy from "deltachat-ios/Info.plist", which is used on missing translations in "deltachat-ios/LANG.lproj/InfoPlist.strings"
+// android specific strings, developers: please take care to remove strings that are no longer used!
+"pref_instant_delivery" = "即时传送";
+"pref_background_notifications" = "使用后台连接";
+"pref_background_notifications_explain" = "需要忽略电池优化，请在推送服务不可用时使用它";
+"pref_reliable_service" = "强制后台连接";
+"pref_reliable_service_explain" = "会形成永久通知";
+"pref_background_notifications_rationale" = "为了保持连接并在后台接收消息，请在下一步中忽略电池优化。\n\nDelta Chat 使用的资源很少，并且会注意不去耗尽电池电量。";
+// disabling "Reliable service" will hide a the maybe annoying permanent-notification with the drawback that new-message-notifications get potentially unreliable
+"perm_enable_bg_reminder_title" = "点按此处即可在 Delta Chat 处于后台时接收消息。";
+"perm_enable_bg_already_done" = "您已允许 Delta Chat 在后台接收消息。\n\n若 Delta Chat 在后台时消息仍未到达，请检查系统设置。";
+// device messages for updates
+"update_2_0" = "新版变化?\n\n💯 端到端加密现在可靠且永久。挂锁图标 🔒 没有了!\n\n✉️ 没有端到端加密的经典电子邮件用字母符号标记l\n\n😻 所有联系人的新的增强的个人资料屏\n\n🔲 新增快速访问聊天中所用应用的按钮\n\n❤️ 请捐赠帮助我们保持独立并继续带来改进: %1$@";

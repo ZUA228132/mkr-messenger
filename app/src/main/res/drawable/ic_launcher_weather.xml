@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Weather icon for stealth mode -->
+    <!-- Sky background -->
+    <path
+        android:fillColor="#42A5F5"
+        android:pathData="M24,24 L84,24 L84,84 L24,84 Z"/>
+    
+    <!-- Sun -->
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M70,36 C70,31.6 66.4,28 62,28 C57.6,28 54,31.6 54,36 C54,40.4 57.6,44 62,44 C66.4,44 70,40.4 70,36 Z"/>
+    
+    <!-- Sun rays -->
+    <path android:fillColor="#FFD54F" android:pathData="M62,22 L62,26"/>
+    <path android:fillColor="#FFD54F" android:pathData="M62,46 L62,50"/>
+    <path android:fillColor="#FFD54F" android:pathData="M48,36 L52,36"/>
+    <path android:fillColor="#FFD54F" android:pathData="M72,36 L76,36"/>
+    
+    <!-- Cloud -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M72,58 C72,54.7 69.3,52 66,52 C65.4,52 64.8,52.1 64.3,52.2 C63.1,48.6 59.8,46 56,46 C51.6,46 48,49.6 48,54 C48,54.3 48,54.7 48.1,55 C44.7,55.5 42,58.4 42,62 C42,66 45.1,69 49,69 L69,69 C71.8,69 74,66.8 74,64 C74,61.5 72.3,59.4 70,58.7 C71.3,58.3 72,57.2 72,58 Z"/>
+</vector>

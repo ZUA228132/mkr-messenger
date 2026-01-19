@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Разрешаем HTTP для нашего сервера -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">193.111.117.137</domain>
+    </domain-config>
+</network-security-config>

@@ -1,0 +1,18 @@
+[Unit]
+Description=Pioneer Messenger Backend
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/pioneer
+ExecStart=/usr/bin/java -jar /opt/pioneer/pioneer-backend.jar
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/pioneer/app.log
+StandardError=append:/var/log/pioneer/error.log
+
+Environment="JAVA_OPTS=-Xmx512m -Xms256m"
+
+[Install]
+WantedBy=multi-user.target

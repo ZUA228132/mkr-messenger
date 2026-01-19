@@ -1,0 +1,154 @@
+# Implementation Plan
+
+- [x] 1. Настройка базовой инфраструктуры
+  - [x] 1.1 Создать API конфигурацию
+    - Создать `lib/core/config/api_config.dart` с базовыми URL для dev/prod
+    - Добавить константы для timeout и других настроек
+    - _Requirements: 1.1, 1.2_
+  - [x] 1.2 Добавить зависимости в pubspec.yaml
+    - Добавить dio, web_socket_channel, flutter_secure_storage
+    - Добавить json_annotation, json_serializable для моделей
+    - _Requirements: 1.1_
+  - [ ]* 1.3 Write property test for API config
+    - **Property 1: API Request Formatting**
+    - **Validates: Requirements 1.1**
+
+- [x] 2. Реализовать API Client
+  - [x] 2.1 Создать базовый API Client с Dio
+    - Создать `lib/data/datasources/api_client.dart`
+    - Настроить interceptors для логирования и ошибок
+    - Реализовать методы get, post, put, delete
+    - _Requirements: 2.1, 2.3, 2.5, 3.2_
+  - [x] 2.2 Реализовать Auth Interceptor
+    - Добавить interceptor для добавления Authorization header
+    - Обработка 401 ответов для редиректа на логин
+    - _Requirements: 3.2, 3.3_
+  - [ ]* 2.3 Write property test for Authorization header
+    - **Property 3: Authorization Header Inclusion**
+    - **Validates: Requirements 3.2**
+
+- [x] 3. Реализовать Secure Storage
+  - [x] 3.1 Обновить SecureLocalStorage для токенов
+    - Добавить методы saveToken, getToken, clearToken
+    - Добавить методы saveUserId, getUserId
+    - _Requirements: 2.4, 2.6, 3.1_
+  - [ ]* 3.2 Write property test for token storage round-trip
+    - **Property 2: Token Storage Round-Trip**
+    - **Validates: Requirements 2.4, 2.6, 3.1**
+  - [ ]* 3.3 Write property test for logout cleanup
+    - **Property 4: Logout Credential Cleanup**
+    - **Validates: Requirements 3.4**
+
+- [x] 4. Checkpoint - Убедиться что все тесты проходят
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 5. Реализовать Auth Repository
+  - [x] 5.1 Создать модели для Auth API
+    - Создать `lib/data/models/auth_models.dart`
+    - AuthResponse, RegisterEmailRequest, LoginEmailRequest, VerifyEmailRequest
+    - _Requirements: 2.1, 2.3, 2.5_
+  - [x] 5.2 Реализовать AuthRepository
+    - Создать `lib/data/repositories/remote_auth_repository.dart`
+    - Методы: registerEmail, verifyEmail, loginEmail, logout
+    - Интеграция с SecureStorage для сохранения токена
+    - _Requirements: 2.1-2.7, 3.4_
+  - [ ]* 5.3 Write unit tests for AuthRepository
+    - Тесты для регистрации, верификации, логина
+    - _Requirements: 2.1-2.7_
+
+- [x] 6. Реализовать WebSocket Service
+  - [x] 6.1 Создать WebSocket Service
+    - Создать `lib/data/datasources/websocket_service.dart`
+    - Подключение к /ws/{userId}
+    - Обработка входящих сообщений
+    - _Requirements: 6.1, 6.2_
+  - [x] 6.2 Реализовать reconnection с exponential backoff
+    - Автоматическое переподключение при разрыве
+    - Exponential backoff: 1s, 2s, 4s, 8s до максимума
+    - _Requirements: 6.4_
+  - [x] 6.3 Реализовать отправку typing events
+    - Метод sendTyping(chatId)
+    - Формат: {"type": "typing", "payload": {"chatId": "...", "userId": "..."}}
+    - _Requirements: 6.3_
+  - [ ]* 6.4 Write property test for WebSocket message parsing
+    - **Property 5: WebSocket Message Parsing**
+    - **Validates: Requirements 5.4, 6.2**
+  - [ ]* 6.5 Write property test for typing event format
+    - **Property 6: Typing Event Format**
+    - **Validates: Requirements 6.3**
+  - [ ]* 6.6 Write property test for reconnection backoff
+    - **Property 7: Reconnection Backoff**
+    - **Validates: Requirements 6.4**
+
+- [x] 7. Checkpoint - Убедиться что все тесты проходят
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 8. Реализовать Chat Repository
+  - [x] 8.1 Создать модели для Chat API
+    - Создать `lib/data/models/chat_models.dart`
+    - Chat, CreateChatRequest, ChatResponse
+    - _Requirements: 4.1, 4.4_
+  - [x] 8.2 Реализовать ChatRepository
+    - Создать `lib/data/repositories/remote_chat_repository.dart`
+    - Методы: getChats, createChat, deleteChat
+    - _Requirements: 4.1-4.4_
+
+- [x] 9. Реализовать Message Repository
+  - [x] 9.1 Создать модели для Message API
+    - Создать `lib/data/models/message_models.dart`
+    - Message, SendMessageRequest, MessageResponse
+    - _Requirements: 5.1, 5.3_
+  - [x] 9.2 Реализовать MessageRepository
+    - Создать `lib/data/repositories/remote_message_repository.dart`
+    - Методы: getMessages, sendMessage
+    - Интеграция с WebSocket для real-time
+    - _Requirements: 5.1-5.4_
+
+- [x] 10. Реализовать User Repository
+  - [x] 10.1 Создать модели для User API
+    - Создать `lib/data/models/user_models.dart`
+    - User, UpdateProfileRequest, SearchUsersResponse
+    - _Requirements: 7.1, 7.2, 8.1_
+  - [x] 10.2 Реализовать UserRepository
+    - Создать `lib/data/repositories/remote_user_repository.dart`
+    - Методы: getUser, updateProfile, updateAvatar, searchUsers, updateFcmToken
+    - _Requirements: 7.1-7.3, 8.1-8.3, 9.2_
+
+- [x] 11. Реализовать Error Handling
+  - [x] 11.1 Создать ApiError и Result классы
+    - Создать `lib/core/error/api_error.dart`
+    - Создать `lib/core/result/result.dart`
+    - Парсинг ошибок из API ответов
+    - _Requirements: 10.1-10.4_
+  - [ ]* 11.2 Write property test for error parsing
+    - **Property 8: Error Response Parsing**
+    - **Validates: Requirements 10.1**
+  - [ ]* 11.3 Write property test for error logging
+    - **Property 9: Error Logging**
+    - **Validates: Requirements 10.4**
+
+- [x] 12. Checkpoint - Убедиться что все тесты проходят
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 13. Интеграция с UI
+  - [x] 13.1 Обновить AuthScreen для работы с бэкендом
+    - Подключить RemoteAuthRepository
+    - Добавить экран верификации email
+    - Обработка ошибок и состояний загрузки
+    - _Requirements: 2.1-2.7_
+  - [x] 13.2 Обновить ChatListScreen
+    - Подключить RemoteChatRepository
+    - Загрузка чатов с сервера
+    - _Requirements: 4.1-4.4_
+  - [x] 13.3 Обновить ChatScreen
+    - Подключить RemoteMessageRepository
+    - Real-time сообщения через WebSocket
+    - Отправка typing indicators
+    - _Requirements: 5.1-5.4, 6.3_
+  - [x] 13.4 Обновить SettingsScreen
+    - Подключить RemoteUserRepository
+    - Редактирование профиля
+    - _Requirements: 7.1-7.3_
+
+- [x] 14. Final Checkpoint - Убедиться что все тесты проходят
+  - Ensure all tests pass, ask the user if questions arise.

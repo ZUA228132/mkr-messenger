@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>method</key>
+	<string>app-store</string>
+	<key>teamID</key>
+	<string>${APPLE_TEAM_ID}</string>
+	<key>uploadBitcode</key>
+	<false/>
+	<key>uploadSymbols</key>
+	<true/>
+	<key>signingStyle</key>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string>Apple Distribution</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>com.mkr.su</key>
+		<string>mkr_app_store_profile</string>
+		<key>com.mkr.su.DcWidget</key>
+		<string>mkr_widget_profile</string>
+		<key>com.mkr.su.DcShare</key>
+		<string>mkr_share_profile</string>
+		<key>com.mkr.su.DcNotificationService</key>
+		<string>mkr_notification_profile</string>
+	</dict>
+</dict>
+</plist>

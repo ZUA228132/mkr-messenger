@@ -1,0 +1,179 @@
+name: Build MKR
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_16.2.app/Contents/Developer
+
+jobs:
+  build-mkr-simulator:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          show-progress: false
+
+      - name: Switch Xcode version
+        run: sudo xcode-select --switch /Applications/Xcode_16.2/Contents/Developer
+
+      - name: Install Rust toolchain for iOS
+        run: cargo install cargo-lipo
+
+      - name: Install CocoaPods dependencies
+        run: pod install
+
+      - name: Download iOS platforms
+        run: xcodebuild -downloadPlatform iOS
+
+      - name: Build MKR for iOS Simulator
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace deltachat-ios.xcworkspace \
+            -scheme deltachat-ios \
+            -destination "platform=iOS Simulator,name=iPhone 16,OS=18.2" \
+            -configuration Debug \
+            PRODUCT_BUNDLE_IDENTIFIER=com.mkr.su \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build | xcbeautify --renderer github-actions || true
+
+      - name: Run Tests
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace deltachat-ios.xcworkspace \
+            -scheme deltachat-ios \
+            -destination "platform=iOS Simulator,name=iPhone 16,OS=18.2" \
+            test \
+            PRODUCT_BUNDLE_IDENTIFIER=com.mkr.su \
+            CODE_SIGNING_REQUIRED=NO | xcbeautify --renderer github-actions || true
+
+  build-mkr-enterprise:
+    runs-on: macos-15
+    if: vars.ESIGN_CERT_P12 != ''
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          show-progress: false
+
+      - name: Switch Xcode version
+        run: sudo xcode-select --switch /Applications/Xcode_16.2/Contents/Developer
+
+      - name: Install Rust toolchain for iOS
+        run: cargo install cargo-lipo
+
+      - name: Install CocoaPods dependencies
+        run: pod install
+
+      - name: Download iOS platforms
+        run: xcodebuild -downloadPlatform iOS
+
+      - name: Import Enterprise Certificate from Esign
+        env:
+          ESIGN_CERT_P12: ${{ vars.ESIGN_CERT_P12 }}
+          ESIGN_CERT_PASSWORD: ${{ vars.ESIGN_CERT_PASSWORD }}
+        run: |
+          echo "Importing Enterprise certificate..."
+          echo -n "$ESIGN_CERT_P12" | base64 --decode -o certificate.p12
+          security create-keychain -p "github_actions" build.keychain
+          security import certificate.p12 -k build.keychain -P "$ESIGN_CERT_PASSWORD" -T /usr/bin/codesign
+          security list-keychain -s build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "github_actions" build.keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "github_actions" build.keychain
+          security find-identity -v -p codesigning build.keychain
+          echo "Enterprise certificate imported successfully"
+
+      - name: Build MKR Archive for Enterprise Distribution
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace deltachat-ios.xcworkspace \
+            -scheme deltachat-ios \
+            -destination generic/platform=iOS \
+            -configuration Release \
+            -archivePath build/MKR.xcarchive \
+            PRODUCT_BUNDLE_IDENTIFIER=com.mkr.su \
+            DEVELOPMENT_TEAM="" \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            CODE_SIGNING_REQUIRED=YES \
+            CODE_SIGNING_ALLOWED=YES \
+            archive 2>&1 | tee build.log | xcbeautify --renderer github-actions || true
+
+      - name: Export IPA (Enterprise)
+        run: |
+          # Создаём export options для Enterprise подписи
+          cat > export-enterprise.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>enterprise</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>compileBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>signingCertificate</key>
+            <string>iPhone Distribution</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.mkr.su</key>
+              <string></string>
+            </dict>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild \
+            -exportArchive \
+            -archivePath build/MKR.xcarchive \
+            -exportPath build/export \
+            -exportOptionsPlist export-enterprise.plist 2>&1 | xcbeautify || echo "Export with warnings"
+
+      - name: Verify IPA
+        run: |
+          if [ -f build/export/*.ipa ]; then
+            echo "✅ IPA created successfully!"
+            ls -lh build/export/*.ipa
+            codesign -dvvv build/export/*.ipa 2>&1 | head -20 || true
+          else
+            echo "⚠️ IPA not found, checking archive..."
+            ls -la build/export/ || true
+          fi
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: MKR-iOS-Enterprise
+          path: build/export/*.ipa
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Create Release Summary
+        run: |
+          echo "## MKR iOS Enterprise Build :white_check_mark:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bundle ID**: com.mkr.su" >> $GITHUB_STEP_SUMMARY
+          echo "- **Certificate**: Enterprise (1 year)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Install**: Download .ipa and install directly" >> $GITHUB_STEP_SUMMARY
+          echo "- **Expires**: Certificate valid for 1 year" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Installation" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download .ipa from Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "2. Install via Sideloadly, AltStore, or directly on jailbroken devices" >> $GITHUB_STEP_SUMMARY

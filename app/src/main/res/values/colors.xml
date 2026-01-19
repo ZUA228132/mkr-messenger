@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Secure Messenger Colors -->
+    <color name="ic_launcher_background">#0D1117</color>
+    <color name="secure_green">#00C853</color>
+    <color name="secure_dark">#0D1117</color>
+    <color name="secure_primary">#00C853</color>
+    <color name="secure_surface">#161B22</color>
+    <color name="secure_accent">#FFAB00</color>
+</resources>

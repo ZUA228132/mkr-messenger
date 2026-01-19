@@ -1,0 +1,171 @@
+# Implementation Plan
+
+- [x] 1. Initialize Flutter Project
+  - [x] 1.1 Create Flutter project in `mkr_flutter/` directory
+    - Run `flutter create mkr_flutter` with org `com.mkr.messenger`
+    - Configure minimum iOS version 14.0, Android API 26
+    - _Requirements: 1.1, 1.4_
+  - [x] 1.2 Add core dependencies to pubspec.yaml
+    - Add: dio, web_socket_channel, flutter_secure_storage, local_auth, sqflite, pointycastle, riverpod, go_router
+    - _Requirements: 1.2_
+  - [x] 1.3 Set up project structure (clean architecture)
+    - Create folders: lib/data, lib/domain, lib/presentation, lib/core
+    - _Requirements: 1.4_
+
+- [x] 2. Implement Validators
+  - [x] 2.1 Create CallsignValidator class
+    - Validate: 3-16 chars, alphanumeric, starts with letter
+    - _Requirements: 2.1_
+  - [ ]* 2.2 Write property test for CallsignValidator
+    - **Property 1: Callsign Validation**
+    - **Validates: Requirements 2.1**
+  - [x] 2.3 Create PinValidator class
+    - Validate: 4-6 digits only
+    - _Requirements: 2.2_
+  - [ ]* 2.4 Write property test for PinValidator
+    - **Property 2: PIN Validation**
+    - **Validates: Requirements 2.2**
+
+- [x] 3. Implement Authentication Module
+  - [x] 3.1 Create AuthRepository interface and implementation
+    - Login, logout, token storage methods
+    - _Requirements: 2.3_
+  - [x] 3.2 Create LockoutManager for progressive lockout
+    - Track failed attempts, calculate lockout duration
+    - _Requirements: 2.5_
+  - [ ]* 3.3 Write property test for LockoutManager
+    - **Property 3: Progressive Lockout**
+    - **Validates: Requirements 2.5**
+  - [x] 3.4 Implement biometric authentication
+    - Use local_auth package for Face ID / fingerprint
+    - _Requirements: 2.4_
+
+- [x] 4. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 5. Implement Encryption Module
+  - [x] 5.1 Create SignalProtocol class with key generation
+    - X25519 key pair generation using pointycastle
+    - _Requirements: 3.1_
+  - [x] 5.2 Implement AES-256-GCM encryption/decryption
+    - Unique nonce per message, authentication tag
+    - _Requirements: 3.2, 3.3_
+  - [ ]* 5.3 Write property test for encryption uniqueness
+    - **Property 4: Encryption Uniqueness**
+    - **Validates: Requirements 3.2**
+  - [ ]* 5.4 Write property test for encryption round-trip
+    - **Property 5: Encryption Round-Trip**
+    - **Validates: Requirements 3.3**
+  - [x] 5.5 Implement key serialization to/from JSON
+    - Serialize KeyPair to JSON, deserialize back
+    - _Requirements: 3.4, 3.5_
+  - [ ]* 5.6 Write property test for key serialization round-trip
+    - **Property 6: Key Serialization Round-Trip**
+    - **Validates: Requirements 3.4, 3.5**
+
+- [x] 6. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 7. Implement Panic Button Module
+  - [x] 7.1 Create SecureWipeService
+    - Methods: wipeKeys, wipeMessages, wipeMedia, revokeServerTokens, resetAppState
+    - _Requirements: 4.2, 4.3, 4.4, 4.5_
+  - [ ]* 7.2 Write property test for secure wipe completeness
+    - **Property 7: Secure Wipe Completeness**
+    - **Validates: Requirements 4.2, 4.3, 4.5**
+  - [x] 7.3 Create PanicButtonScreen UI
+    - Hold button 3 seconds to trigger, confirmation dialog
+    - _Requirements: 4.1_
+
+- [x] 8. Implement Stealth Mode Module
+  - [x] 8.1 Create StealthModeService
+    - Enable/disable stealth, store secret code, validate code
+    - _Requirements: 5.1, 5.3, 5.4_
+  - [ ]* 8.2 Write property test for stealth code validation
+    - **Property 8: Stealth Code Validation**
+    - **Validates: Requirements 5.3**
+  - [ ]* 8.3 Write property test for stealth lockout trigger
+    - **Property 9: Stealth Lockout Trigger**
+    - **Validates: Requirements 5.5**
+  - [x] 8.4 Create FakeCalculatorScreen UI
+    - Functional calculator, secret code input triggers unlock
+    - _Requirements: 5.2_
+
+- [x] 9. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 10. Implement Chat Module
+  - [x] 10.1 Create ChatRepository with WebSocket support
+    - Send/receive messages via WebSocket, message queuing
+    - _Requirements: 6.1_
+  - [x] 10.2 Implement MediaEncryption service
+    - Encrypt media files before upload
+    - _Requirements: 6.2_
+  - [ ]* 10.3 Write property test for media encryption
+    - **Property 10: Media Encryption**
+    - **Validates: Requirements 6.2**
+  - [x] 10.4 Implement AutoDeleteManager
+    - Delete messages based on configured policy
+    - _Requirements: 6.4_
+  - [ ]* 10.5 Write property test for auto-delete enforcement
+    - **Property 11: Auto-Delete Enforcement**
+    - **Validates: Requirements 6.4**
+  - [x] 10.6 Create ChatScreen and ChatListScreen UI
+    - Message list, input field, delivery status indicators
+    - _Requirements: 6.3, 6.5_
+
+- [x] 11. Implement Security Check Module
+  - [x] 11.1 Create SecurityChecker service
+    - Check jailbreak/root, debugger, emulator
+    - _Requirements: 7.1, 7.2, 7.3_
+  - [x] 11.2 Implement risk level calculation
+    - Calculate RiskLevel from security check results
+    - _Requirements: 7.4_
+  - [ ]* 11.3 Write property test for risk level calculation
+    - **Property 12: Risk Level Calculation**
+    - **Validates: Requirements 7.4**
+  - [x] 11.4 Create SecurityCheckScreen UI
+    - Display security status and risk level
+    - _Requirements: 7.4_
+
+- [x] 12. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 13. Implement Local Storage Module
+  - [x] 13.1 Create SecureLocalStorage with encrypted SQLite
+    - Store/retrieve messages, encrypt database
+    - _Requirements: 9.1, 9.4_
+  - [ ]* 13.2 Write property test for offline message caching
+    - **Property 13: Offline Message Caching**
+    - **Validates: Requirements 9.1**
+  - [ ]* 13.3 Write property test for local storage encryption
+    - **Property 15: Local Storage Encryption**
+    - **Validates: Requirements 9.4**
+  - [x] 13.4 Implement offline message queue
+    - Queue messages when offline, sync when online
+    - _Requirements: 9.2, 9.3_
+  - [ ]* 13.5 Write property test for offline queue integrity
+    - **Property 14: Offline Queue Integrity**
+    - **Validates: Requirements 9.2**
+
+- [ ] 14. Implement iOS-Specific Features
+  - [x] 14.1 Configure Cupertino theme and widgets
+    - Use CupertinoApp, CupertinoNavigationBar, etc.
+    - _Requirements: 8.1_
+  - [x] 14.2 Set up iOS project configuration
+    - Info.plist permissions, iOS 14.0 minimum
+    - _Requirements: 8.3_
+  - [x] 14.3 Configure APNs for push notifications
+    - Add firebase_messaging or APNs native integration
+    - _Requirements: 8.4_
+
+- [x] 15. Set Up CI/CD for iOS Builds
+  - [x] 15.1 Create codemagic.yaml configuration
+    - Build workflow for iOS, code signing setup
+    - _Requirements: 10.1, 10.2_
+  - [x] 15.2 Document certificate and provisioning setup
+    - Instructions for Apple Developer account setup
+    - _Requirements: 10.3, 10.4_
+
+- [ ] 16. Final Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.

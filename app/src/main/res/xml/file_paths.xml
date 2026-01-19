@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <files-path name="voice_messages" path="voice_messages/" />
+    <files-path name="video_notes" path="video_notes/" />
+    <files-path name="attachments" path="attachments/" />
+    <files-path name="media" path="media/" />
+    <files-path name="files" path="files/" />
+    <cache-path name="cache" path="." />
+</paths>

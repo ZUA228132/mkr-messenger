@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "388236589400",
+    "project_id": "patriot-app-mess",
+    "storage_bucket": "patriot-app-mess.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:388236589400:android:9b3e48181f40b9762dcd2d",
+        "android_client_info": {
+          "package_name": "com.pioneer.messenger"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASshCz0CNJRSPfhH0ICDuy8SYgQr6V-Hw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Ghost body with wavy bottom - centered for adaptive icon -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,20C38.54,20 26,32.54 26,48v32c0,0 3,6 7,0s5,-6 10,0s5,6 10,0s5,-6 10,0s5,6 10,0s5,6 7,0V48C82,32.54 69.46,20 54,20z"/>
+    <!-- Ghost body highlight -->
+    <path
+        android:fillColor="#E3F2FD"
+        android:pathData="M54,24C41.85,24 32,33.85 32,46v6c0,-12.15 9.85,-22 22,-22s22,9.85 22,22v-6C76,33.85 66.15,24 54,24z"/>
+    <!-- Left eye white -->
+    <ellipse
+        android:fillColor="#1976D2"
+        android:cx="44"
+        android:cy="48"
+        android:rx="6"
+        android:ry="7"/>
+    <!-- Left eye pupil -->
+    <ellipse
+        android:fillColor="#0D47A1"
+        android:cx="45"
+        android:cy="49"
+        android:rx="3"
+        android:ry="3.5"/>
+    <!-- Left eye shine -->
+    <circle
+        android:fillColor="#FFFFFF"
+        android:cx="46.5"
+        android:cy="46.5"
+        android:r="1.5"/>
+    <!-- Right eye white -->
+    <ellipse
+        android:fillColor="#1976D2"
+        android:cx="64"
+        android:cy="48"
+        android:rx="6"
+        android:ry="7"/>
+    <!-- Right eye pupil -->
+    <ellipse
+        android:fillColor="#0D47A1"
+        android:cx="65"
+        android:cy="49"
+        android:rx="3"
+        android:ry="3.5"/>
+    <!-- Right eye shine -->
+    <circle
+        android:fillColor="#FFFFFF"
+        android:cx="66.5"
+        android:cy="46.5"
+        android:r="1.5"/>
+    <!-- Cute smile -->
+    <path
+        android:fillColor="#0D47A1"
+        android:pathData="M46,60 Q54,68 62,60 Q54,64 46,60z"/>
+    <!-- Blush left -->
+    <ellipse
+        android:fillColor="#FFCDD2"
+        android:cx="36"
+        android:cy="56"
+        android:rx="3"
+        android:ry="2"/>
+    <!-- Blush right -->
+    <ellipse
+        android:fillColor="#FFCDD2"
+        android:cx="72"
+        android:cy="56"
+        android:rx="3"
+        android:ry="2"/>
+</vector>
