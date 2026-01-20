@@ -28,7 +28,8 @@ jobs:
       - name: Install iOS pods
         run: |
           cd ios
-          pod install
+          rm -f Podfile.lock
+          pod install --repo-update
 
       - name: Build iOS (Release, No Codesign)
         run: |
