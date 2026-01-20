@@ -45,10 +45,16 @@ dependencies:
   
   # Permissions
   permission_handler: ^11.3.1
-  
+
   # Image/File Picker
   image_picker: ^1.0.7
   file_picker: ^8.0.0+1
+
+  # Package Info
+  package_info_plus: ^8.0.0
+
+  # App Updates (Android only)
+  install_plugin: ^2.1.0
 
   # Push Notifications (APNs for iOS, FCM for Android)
   # Requirements: 8.4 - Use APNs for push notifications
