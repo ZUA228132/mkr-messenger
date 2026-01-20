@@ -39,10 +39,14 @@ class PushNotificationService {
     }
 
     try {
-      // Initialize Firebase Core
-      await Firebase.initializeApp();
-
-      debugPrint('Firebase initialized successfully');
+      // Initialize Firebase Core (on Android only, iOS initializes in native code)
+      if (Platform.isAndroid) {
+        await Firebase.initializeApp();
+        debugPrint('Firebase initialized successfully (Android)');
+      } else {
+        // On iOS, Firebase is already initialized in AppDelegate
+        debugPrint('Firebase already initialized in native iOS code');
+      }
 
       // Request notification permissions
       await _requestPermissions();
@@ -292,9 +296,9 @@ class PushNotificationService {
 /// This must be a top-level function or static method
 @pragma('vm:entry-point')
 Future<void> _firebaseBackgroundMessageHandler(RemoteMessage message) async {
-  // Initialize Firebase if not already initialized
-  await Firebase.initializeApp();
-
+  // Initialize Firebase if not already initialized (Android only)
+  // On iOS, Firebase is initialized in AppDelegate
+  // Note: Background message handler has limited execution time
   debugPrint('Background message received: ${message.messageId}');
   debugPrint('Message data: ${message.data}');
 
