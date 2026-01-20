@@ -37,8 +37,9 @@ target 'Runner' do
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
   # Firebase for push notifications
-  pod 'Firebase/Core'
-  pod 'Firebase/Messaging'
+  # Using Firebase 10.x for Swift 5.0 compatibility
+  pod 'Firebase/Core', '~> 10.0'
+  pod 'Firebase/Messaging', '~> 10.0'
 end
 
 target 'RunnerTests' do
@@ -60,11 +61,8 @@ post_install do |installer|
       config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
       config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
 
-      # Fix Swift version compatibility for Firebase
+      # Fix Swift version compatibility for Firebase 10.x
       config.build_settings['SWIFT_VERSION'] = '5.0'
-
-      # Add Swift flags for Firebase compatibility
-      config.build_settings['OTHER_SWIFT_FLAGS'] = '$(inherited) -enable-experimental-feature AccessLevelOnImport'
     end
   end
 end

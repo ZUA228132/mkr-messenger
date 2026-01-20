@@ -52,8 +52,9 @@ dependencies:
 
   # Push Notifications (APNs for iOS, FCM for Android)
   # Requirements: 8.4 - Use APNs for push notifications
-  firebase_core: ^3.3.0
-  firebase_messaging: ^15.0.4
+  # Using older versions for Swift 5.0 compatibility on CI
+  firebase_core: 2.24.2
+  firebase_messaging: 14.7.10
 
   # JSON Serialization
   json_annotation: ^4.8.1
