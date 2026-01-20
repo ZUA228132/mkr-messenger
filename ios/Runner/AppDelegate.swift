@@ -222,13 +222,11 @@ import UserNotifications
       }
     }
   }
-}
 
-// MARK: - UNUserNotificationCenterDelegate
+  // MARK: - UNUserNotificationCenterDelegate
 
-extension AppDelegate: UNUserNotificationCenterDelegate {
   // Called when app is in foreground and a notification is received
-  func userNotificationCenter(
+  override func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification,
     withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
@@ -258,31 +256,6 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
       completionHandler([.alert, .sound, .badge])
     }
   }
-
-  // Called when user taps on notification
-  func userNotificationCenter(
-    _ center: UNUserNotificationCenter,
-    didReceive response: UNNotificationResponse,
-    withCompletionHandler completionHandler: @escaping () -> Void
-  ) {
-    let userInfo = response.notification.request.content.userInfo
-
-    print("Notification tapped: \(userInfo)")
-
-    // Notify Flutter about the notification tap
-    let controller = window?.rootViewController as! FlutterViewController
-    let pushChannel = FlutterMethodChannel(
-      name: "com.mkr.messenger/push_notification",
-      binaryMessenger: controller.binaryMessenger
-    )
-
-    pushChannel.invokeMethod("onNotificationTapped", arguments: [
-      "data": userInfo,
-      "actionIdentifier": response.actionIdentifier
-    ])
-
-    completionHandler()
-  }
 }
 
 // MARK: - MessagingDelegate
@@ -301,10 +274,5 @@ extension AppDelegate: MessagingDelegate {
     if let token = fcmToken {
       pushChannel.invokeMethod("onFCMTokenReceived", arguments: ["token": token])
     }
-  }
-
-  // Called when FCM receives data message (direct channel, not through APNs)
-  func messaging(_ messaging: Messaging, didReceive remoteMessage: RemoteMessage) {
-    print("FCM data message received: \(remoteMessage.appData)")
   }
 }
