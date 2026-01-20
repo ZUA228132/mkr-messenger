@@ -2,6 +2,7 @@ import Foundation
 import PushKit
 import CallKit
 import Flutter
+import AVFoundation
 
 /// Manages VOIP push notifications and CallKit integration for incoming calls
 /// Requirements: 8.4 - Use APNs for push notifications
@@ -36,7 +37,9 @@ class VoipPushManager: NSObject {
     configuration.maximumCallGroups = 1
     configuration.maximumCallsPerCallGroup = 1
     configuration.supportedHandleTypes = [.generic]
-    configuration.iconTemplateImageData = UIImage(named: "AppIcon")?.pngData()
+    if let appIcon = UIImage(named: "AppIcon") {
+      configuration.iconTemplateImageData = appIcon.pngData()
+    }
 
     // Ringtone
     if let ringtonePath = Bundle.main.path(forResource: "ringtone", ofType: "caf") {
@@ -300,7 +303,7 @@ class ProviderDelegate: NSObject, CXProviderDelegate {
   func provider(
     _ provider: CXProvider,
     didDeactivate audioSession: AVAudioSession
-  {
+  ) {
     print("Audio session deactivated")
   }
 }

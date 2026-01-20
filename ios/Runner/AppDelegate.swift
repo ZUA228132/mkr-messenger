@@ -5,6 +5,7 @@ import FirebaseMessaging
 import PushKit
 import CallKit
 import AVFoundation
+import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -28,6 +29,9 @@ import AVFoundation
 
     // Set delegate for remote notifications
     UNUserNotificationCenter.current().delegate = self
+
+    // Set FCM messaging delegate
+    Messaging.messaging().delegate = self
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
@@ -300,7 +304,7 @@ extension AppDelegate: MessagingDelegate {
   }
 
   // Called when FCM receives data message (direct channel, not through APNs)
-  func messaging(_ messaging: Messaging, didReceive message: FirebaseMessaging.MessagingProtocol) {
-    print("FCM data message received: \(message.appData)")
+  func messaging(_ messaging: Messaging, didReceive remoteMessage: RemoteMessage) {
+    print("FCM data message received: \(remoteMessage.appData)")
   }
 }
