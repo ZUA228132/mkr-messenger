@@ -39,24 +39,21 @@ class PushNotificationService {
     }
 
     try {
-      // Initialize Firebase Core (on Android only, iOS initializes in native code)
-      if (Platform.isAndroid) {
+      // Initialize Firebase Core
+      if (Firebase.apps.isEmpty) {
         await Firebase.initializeApp();
-        debugPrint('Firebase initialized successfully (Android)');
+        debugPrint('Firebase initialized successfully');
       } else {
-        // On iOS, Firebase is already initialized in AppDelegate
-        debugPrint('Firebase already initialized in native iOS code');
+        debugPrint('Firebase already initialized');
       }
 
-      // Request notification permissions
-      await _requestPermissions();
-
-      // Get initial message if app was opened from notification
-      RemoteMessage? initialMessage =
-          await _firebaseMessaging.getInitialMessage();
-      if (initialMessage != null) {
-        _handleMessage(initialMessage);
+      // Request notification permissions (iOS only, Android handles in manifest)
+      if (Platform.isIOS) {
+        await _requestPermissions();
       }
+
+      // Get tokens
+      await _getTokens();
 
       // Handle messages when app is in foreground
       FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
@@ -64,68 +61,69 @@ class PushNotificationService {
       // Handle messages when app is in background but opened
       FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
 
-      // Handle background messages (needs top-level function)
-      FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
-
-      // Get tokens
-      await _getTokens();
+      // Handle background messages (Android only, iOS uses native handlers)
+      if (Platform.isAndroid) {
+        try {
+          FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
+        } catch (e) {
+          debugPrint('Failed to set background message handler: $e');
+        }
+      }
 
       // Listen for token refresh
       _firebaseMessaging.onTokenRefresh.listen(_onTokenRefresh);
 
       _isInitialized = true;
       debugPrint('PushNotificationService initialized successfully');
-      debugPrint('FCM Token: $_fcmToken');
-      if (Platform.isIOS) {
-        debugPrint('APNs Token: $_apnsToken');
+      if (_fcmToken != null && _fcmToken!.isNotEmpty) {
+        final displayToken = _fcmToken!.length > 20 ? '${_fcmToken!.substring(0, 20)}...' : _fcmToken!;
+        debugPrint('FCM Token: $displayToken');
       }
-    } catch (e) {
+      if (Platform.isIOS && _apnsToken != null && _apnsToken!.isNotEmpty) {
+        final displayToken = _apnsToken!.length > 20 ? '${_apnsToken!.substring(0, 20)}...' : _apnsToken!;
+        debugPrint('APNs Token: $displayToken');
+      }
+    } catch (e, st) {
       debugPrint('Failed to initialize push notifications: $e');
-      rethrow;
+      debugPrint('Stack trace: $st');
+      // Don't rethrow - allow app to continue even if push notifications fail
+      _isInitialized = true;
     }
   }
 
   /// Request notification permissions
   Future<void> _requestPermissions() async {
-    if (Platform.isIOS) {
-      // Request APNs token for regular notifications
-      final settings = await _firebaseMessaging.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
+    try {
+      if (Platform.isIOS) {
+        // Request APNs token for regular notifications
+        final settings = await _firebaseMessaging.requestPermission(
+          alert: true,
+          announcement: false,
+          badge: true,
+          carPlay: false,
+          criticalAlert: false,
+          provisional: false,
+          sound: true,
+        );
 
-      debugPrint('APNs permission granted: ${settings.authorizationStatus}');
+        debugPrint('APNs permission status: ${settings.authorizationStatus}');
 
-      if (settings.authorizationStatus == AuthorizationStatus.notDetermined) {
-        debugPrint('APNs permission not determined, requesting again...');
-      } else if (settings.authorizationStatus ==
-          AuthorizationStatus.denied) {
-        debugPrint('APNs permission denied');
-      } else if (settings.authorizationStatus ==
-          AuthorizationStatus.authorized) {
-        debugPrint('APNs permission granted');
-      } else if (settings.authorizationStatus ==
-          AuthorizationStatus.provisional) {
-        debugPrint('APNs provisional permission granted');
+        // Get APNs token (may be null initially)
+        try {
+          _apnsToken = await _firebaseMessaging.getAPNSToken();
+          if (_apnsToken != null) {
+            debugPrint('APNs Token received: ${_apnsToken?.substring(0, 20)}...');
+          }
+        } catch (e) {
+          debugPrint('Could not get APNs token: $e');
+        }
       }
 
-      // Get APNs token
-      _apnsToken = await _firebaseMessaging.getAPNSToken();
-      if (_apnsToken != null) {
-        debugPrint('APNs Token received: ${_apnsToken?.substring(0, 20)}...');
-      }
-    } else if (Platform.isAndroid) {
-      // Android permissions are handled in AndroidManifest.xml
-      debugPrint('Android FCM permissions handled in manifest');
+      // Enable auto-init for FCM token
+      await _firebaseMessaging.setAutoInitEnabled(true);
+    } catch (e) {
+      debugPrint('Error requesting permissions: $e');
     }
-
-    // Get FCM token registration
-    await _firebaseMessaging.setAutoInitEnabled(true);
   }
 
   /// Get FCM and APNs tokens
