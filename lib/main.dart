@@ -28,10 +28,13 @@ import 'presentation/screens/simple_panic_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize push notifications
-  await PushNotificationService().initialize();
-  
+
+  // Initialize push notifications (Android only for now)
+  // TODO: Re-enable for iOS after fixing initialization issues
+  if (Platform.isAndroid) {
+    await PushNotificationService().initialize();
+  }
+
   runApp(const ProviderScope(child: MKRApp()));
 }
 
