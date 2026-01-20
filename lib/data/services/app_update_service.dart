@@ -208,10 +208,7 @@ class AppUpdateService {
 
           // Install the APK
           try {
-            await InstallPlugin.installApk(
-              file.path,
-              'com.pioneer.messenger', // Убедитесь, что это правильный package name
-            );
+            await InstallPlugin.installApk(file.path);
           } catch (e) {
             developer.log('Install error: $e', name: 'AppUpdateService');
             onError?.call('Failed to install APK: $e');
